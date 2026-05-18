@@ -1,0 +1,690 @@
+/* Marrison Assistant Site Agent CSS - Modern Design */
+
+.marrison-chat-widget {
+    position: fixed;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Posizioni */
+.marrison-bottom-right {
+    bottom: 20px;
+    right: 20px;
+}
+
+.marrison-bottom-left {
+    bottom: 20px;
+    left: 20px;
+}
+
+.marrison-top-right {
+    top: 20px;
+    right: 20px;
+}
+
+.marrison-top-left {
+    top: 20px;
+    left: 20px;
+}
+
+/* Chat Button - Modern Design */
+.marrison-chat-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    background: var(--marrison-icon-color, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    border: none;
+    outline: none;
+}
+
+.marrison-chat-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.marrison-chat-button:active {
+    transform: scale(0.95);
+}
+
+.marrison-chat-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Chat Window - Modern Design */
+.marrison-chat-window {
+    position: absolute;
+    bottom: 80px;
+    width: 380px;
+    height: 620px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.marrison-bottom-right .marrison-chat-window {
+    right: 0;
+    transform-origin: bottom right;
+}
+
+.marrison-bottom-left .marrison-chat-window {
+    left: 0;
+    transform-origin: bottom left;
+}
+
+.marrison-top-right .marrison-chat-window {
+    right: 0;
+    top: 80px;
+    bottom: auto;
+    transform-origin: top right;
+}
+
+.marrison-top-left .marrison-chat-window {
+    left: 0;
+    top: 80px;
+    bottom: auto;
+    transform-origin: top left;
+}
+
+.marrison-chat-window.open {
+    display: flex;
+    animation: chatOpen 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.marrison-chat-window.closing {
+    animation: chatClose 0.32s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+@keyframes chatOpen {
+    0%   { opacity: 0; transform: scale(0.35); }
+    60%  { opacity: 1; transform: scale(1.04); }
+    80%  { transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes chatClose {
+    0%   { opacity: 1; transform: scale(1); }
+    20%  { transform: scale(1.03); }
+    100% { opacity: 0; transform: scale(0.35); }
+}
+
+/* Header - Clean Card Design */
+.marrison-chat-header {
+    padding: 14px 16px 14px 16px;
+    background: #ffffff;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+}
+
+/* Avatar circle — usa il colore testata configurato */
+.marrison-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.marrison-header-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.marrison-avatar-img {
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    object-fit: contain;
+}
+
+/* Pallino verde online sull'avatar */
+.marrison-avatar-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 11px;
+    height: 11px;
+    background: #22c55e;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px rgba(34,197,94,0.3);
+    animation: avatarPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes avatarPulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(34,197,94,0.3); }
+    50%       { box-shadow: 0 0 0 4px rgba(34,197,94,0.15); }
+}
+
+/* Testo header */
+.marrison-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.marrison-header-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.marrison-header-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.marrison-status-dot {
+    display: none;
+}
+
+.marrison-guest-label {
+    opacity: 0.75;
+}
+
+/* Close button — minimal */
+.marrison-chat-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+}
+
+.marrison-chat-close:hover {
+    color: #475569;
+    background: #f1f5f9;
+}
+
+/* Messages Area - Modern Design */
+.marrison-chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8fafc;
+    scroll-behavior: smooth;
+}
+
+.marrison-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.marrison-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.marrison-chat-messages::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.marrison-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Message Bubbles - Modern Design */
+.marrison-message {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.marrison-message.marrison-bot {
+    align-items: flex-start;
+}
+
+.marrison-message.marrison-user {
+    align-items: flex-end;
+}
+
+.marrison-message-content {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    line-height: 1.4;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.marrison-bot .marrison-message-content {
+    background: white;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+
+.marrison-user .marrison-message-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.marrison-message-time {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 4px;
+    padding: 0 4px;
+}
+
+.marrison-user .marrison-message-time {
+    text-align: right;
+}
+
+/* Links in messages */
+.marrison-message-content a {
+    color: #667eea;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.marrison-message-content a:hover {
+    color: #5a67d8;
+}
+
+/* Typing Indicator - Modern Design */
+.marrison-typing {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    max-width: 80px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.marrison-typing-dot {
+    width: 8px;
+    height: 8px;
+    background: #94a3b8;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: typing 1.4s infinite;
+}
+
+.marrison-typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.marrison-typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    30% {
+        transform: translateY(-8px);
+        opacity: 1;
+    }
+}
+
+/* Input Area - Design Semplice e Funzionale */
+.marrison-chat-input {
+    padding: 16px 20px;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.marrison-chat-textarea {
+    flex: 1;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    resize: none;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    min-height: 44px;
+    max-height: 120px;
+    background: white;
+    outline: none;
+    color: #333;
+    box-sizing: border-box;
+}
+
+.marrison-chat-textarea:focus {
+    border-color: var(--marrison-button-color, #667eea);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.marrison-chat-textarea::placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+.marrison-send-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: none;
+    background: var(--marrison-button-color, #667eea);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.marrison-send-button:hover {
+    background: var(--marrison-button-color-hover, #5a67d8);
+}
+
+.marrison-send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive Design — Mobile full-screen */
+@media (max-width: 480px) {
+    /* Bottone: rimane nel suo angolo, contenitore non si allarga */
+    .marrison-bottom-right { bottom: 16px; right: 16px; left: auto; }
+    .marrison-bottom-left  { bottom: 16px; left: 16px;  right: auto; }
+    .marrison-top-right    { top: 16px;    right: 16px; left: auto; }
+    .marrison-top-left     { top: 16px;    left: 16px;  right: auto; }
+
+    /* Finestra chat: full-screen */
+    .marrison-chat-window,
+    .marrison-bottom-right .marrison-chat-window,
+    .marrison-bottom-left  .marrison-chat-window,
+    .marrison-top-right    .marrison-chat-window,
+    .marrison-top-left     .marrison-chat-window {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        transform-origin: center bottom;
+    }
+
+    .marrison-chat-messages {
+        padding: 14px 16px;
+    }
+
+    .marrison-chat-input {
+        padding: 10px 12px;
+        gap: 8px;
+        /* safe area per iPhone notch/home bar */
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .marrison-message-content {
+        max-width: 88%;
+        font-size: 14px;
+    }
+
+    .marrison-chat-header {
+        padding: 12px 16px;
+        /* safe area per iPhone status bar */
+        padding-top: max(12px, env(safe-area-inset-top));
+    }
+}
+
+/* Welcome Message Special Styling */
+.marrison-welcome-message {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+    border: 1px solid #0ea5e9 !important;
+    color: #0c4a6e !important;
+}
+
+.marrison-tip-message {
+    background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%) !important;
+    border: 1px solid #f59e0b !important;
+    color: #92400e !important;
+}
+
+/* Loading States */
+.marrison-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+    .marrison-chat-window {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .marrison-chat-messages {
+        background: #0f172a;
+    }
+    
+    .marrison-chat-input {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .marrison-chat-textarea {
+        background: #0f172a;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+    
+    .marrison-bot .marrison-message-content {
+        background: #334155;
+        color: #e2e8f0;
+        border-color: #475569;
+    }
+
+    .marrison-intent-btn {
+        background: #1e293b;
+        color: var(--marrison-button-color, #667eea);
+        border-color: var(--marrison-button-color, #667eea);
+    }
+}
+
+/* Bottoni routing categoria (quick-reply) */
+.marrison-intent-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 2px 0 10px 0;
+}
+
+.marrison-intent-btn {
+    background: #f1f5f9;
+    border: 1.5px solid var(--marrison-button-color, #667eea);
+    color: var(--marrison-button-color, #667eea);
+    border-radius: 14px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.3;
+    white-space: nowrap;
+    outline: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Hover solo su dispositivi che supportano hover reale (no touch stuck) */
+@media (hover: hover) {
+    .marrison-intent-btn:hover {
+        background: var(--marrison-button-color, #667eea);
+        color: #ffffff;
+    }
+}
+
+.marrison-intent-btn:active {
+    background: var(--marrison-button-color, #667eea);
+    color: #ffffff;
+    opacity: 0.85;
+}
+
+/* Privacy policy notice */
+.marrison-privacy-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border-top: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+.marrison-privacy-notice a {
+    color: var(--marrison-button-color, #667eea);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.marrison-privacy-notice a:hover {
+    opacity: 0.8;
+}
+
+.marrison-privacy-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+
+.marrison-privacy-close:hover {
+    color: #475569;
+}
+
+/* ── Modalità shortcode / inline ───────────────────────────────────────────
+   Sostituisce il widget flottante: la chat è sempre visibile nel punto
+   in cui viene inserito lo shortcode [marrison_chat].
+   ───────────────────────────────────────────────────────────────────────── */
+
+.marrison-chat-inline {
+    position: relative;
+    display: block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Il pulsante flottante non serve in modalità inline */
+.marrison-chat-inline .marrison-chat-button {
+    display: none !important;
+}
+
+/* La finestra chat è sempre visibile e occupa il contenitore */
+.marrison-chat-inline .marrison-chat-window,
+.marrison-chat-inline .marrison-chat-window.open {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: var(--marrison-chat-height, 520px) !important;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    display: flex !important;
+    animation: none !important;
+}
+
+/* Responsive: su mobile occupa tutta la larghezza disponibile */
+@media (max-width: 480px) {
+    .marrison-chat-inline .marrison-chat-window,
+    .marrison-chat-inline .marrison-chat-window.open {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        height: var(--marrison-chat-height, 480px) !important;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+    }
+}

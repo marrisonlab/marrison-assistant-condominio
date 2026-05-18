@@ -1,0 +1,3 @@
+[2026-05-18 09:10:08] relazione — parent=posts::condominio child=posts::fornitore
+[2026-05-18 09:10:08] tabella wp_jet_rel_items non trovata
+[2026-05-18 09:10:08] get_fornitori(1112) IDs trovati: nessuno
