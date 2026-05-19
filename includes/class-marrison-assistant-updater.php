@@ -13,8 +13,8 @@ class Marrison_Assistant_Updater {
     private $plugin_slug = 'marrison-assistant';
     private $plugin_file = 'marrison-assistant/marrison-assistant.php';
     private $github_user = 'marrisonlab';
-    private $github_repo = 'marrison-assistant';
-    private $github_api_url = 'https://api.github.com/repos/marrisonlab/marrison-assistant';
+    private $github_repo = 'marrison-assistant-condominio';
+    private $github_api_url = 'https://api.github.com/repos/marrisonlab/marrison-assistant-condominio';
     public function __construct() {
         // Inietta update quando WP legge la cache update_plugins (più affidabile di pre_set_*).
         add_filter('site_transient_update_plugins', [$this, 'check_update'], 999);
@@ -294,13 +294,13 @@ class Marrison_Assistant_Updater {
         $info->version = $remote['version'];
         $info->author = '<a href="https://marrisonlab.com" target="_blank">Marrisonlab</a>';
         $info->author_profile = 'https://marrisonlab.com';
-        $info->plugin_url = 'https://github.com/marrisonlab/marrison-assistant';
+        $info->plugin_url = 'https://github.com/marrisonlab/marrison-assistant-condominio';
         $info->download_link = $remote['download_url'];
         $info->requires_php = '7.4';
         $info->requires = '5.0';
         $info->tested = '6.4';
         $info->last_updated = $remote['published_at'];
-        $info->homepage = 'https://github.com/marrisonlab/marrison-assistant';
+        $info->homepage = 'https://github.com/marrisonlab/marrison-assistant-condominio';
         $info->sections = [
             'description' => 'Assistente AI per WordPress con integrazione Google Gemini. Widget chat frontend, RAG, analytics token e rate limiting integrati.',
             'installation' => '1. Carica il plugin in wp-content/plugins/<br>2. Attiva il plugin<br>3. Configura la Gemini API Key nelle impostazioni',
@@ -437,11 +437,6 @@ class Marrison_Assistant_Updater {
      */
     public function cleanup_maintenance_file($upgrader, $options) {
         error_log('Marrison Assistant: Cleanup maintenance file called');
-
-        // Forza refresh della white-label cache dopo l'update (la config è in Commander/option, non nel filesystem del plugin)
-        if (class_exists('Marrison_Assistant_White_Label')) {
-            Marrison_Assistant_White_Label::flush_cache();
-        }
 
         $maintenance_file = ABSPATH . '.maintenance';
         if (file_exists($maintenance_file)) {

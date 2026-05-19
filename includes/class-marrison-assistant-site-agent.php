@@ -21,6 +21,8 @@ class Marrison_Assistant_Site_Agent {
         add_action('wp_ajax_nopriv_marrison_site_agent_ping', array($this, 'handle_ping'));
         add_action('wp_ajax_marrison_site_agent_track',       array($this, 'handle_track'));
         add_action('wp_ajax_nopriv_marrison_site_agent_track',array($this, 'handle_track'));
+        add_action('wp_ajax_marrison_upload_photo',        array($this, 'handle_photo_upload'));
+        add_action('wp_ajax_nopriv_marrison_upload_photo', array($this, 'handle_photo_upload'));
     }
 
     /**
@@ -82,14 +84,9 @@ class Marrison_Assistant_Site_Agent {
                         ),
                     ));
                 } else {
-                    $options = array_map(function ($r) {
-                        return array('value' => 'select_' . $r['id'], 'label' => $r['label']);
-                    }, $results);
-                    $options[] = array('value' => 'no', 'label' => '🔍 Nessuno di questi');
                     wp_send_json_success(array(
-                        'message'   => 'Ho trovato più condomini. Seleziona il tuo:',
-                        'next_step' => 'select_condominio',
-                        'options'   => $options,
+                        'message'   => 'Ho trovato più condomini con questo nome. Puoi essere più specifico? Inserisci l\'indirizzo completo o aggiungi dettagli come il numero civico o la città.',
+                        'next_step' => 'find_condominio',
                     ));
                 }
                 break;
@@ -100,7 +97,7 @@ class Marrison_Assistant_Site_Agent {
                     $cid  = (int) $m[1];
                     $post = get_post($cid);
                     $addr = get_post_meta($cid, 'indirizzo_condominio', true);
-                    $label = $post ? ($post->post_title . ($addr ? ' — ' . $addr : '')) : 'Condominio #' . $cid;
+                    $label = $addr ? 'Condominio di ' . $addr : ($post ? $post->post_title : 'Condominio #' . $cid);
                     wp_send_json_success(array(
                         'message'      => 'Selezionato: <strong>' . esc_html($label) . '</strong>.<br>Descrivi il problema che hai riscontrato.',
                         'next_step'    => 'describe_problem',
@@ -148,33 +145,39 @@ class Marrison_Assistant_Site_Agent {
                 $fornitori = $condo->get_fornitori($cid);
                 if (empty($fornitori)) {
                     wp_send_json_success(array(
-                        'message'   => 'Non ho trovato fornitori associati a questo condominio. Contatta direttamente l\'amministratore.',
-                        'next_step' => 'find_condominio',
-                        'reset'     => true,
+                        'message'       => 'Non ho trovato fornitori associati a questo condominio.<br>Posso comunque inoltrarla all&#8217;amministratore. Vuoi allegare delle foto?',
+                        'next_step'     => 'upload_photos',
+                        'photo_upload'  => true,
+                        'admin_only'    => true,
+                        'condominio_id' => $cid,
+                        'problema'      => $input,
                     ));
                     break;
                 }
                 $fornitore = $condo->classify_problem($input, $fornitori);
                 if (!$fornitore) {
-                    // Classificazione AI fallita: chiedi all'utente di scegliere manualmente
                     $options = array_map(function ($f) {
                         $lbl = $f['nome'];
                         if (!empty($f['tipologia'])) $lbl .= ' (' . $f['tipologia'] . ')';
                         return array('value' => 'select_forn_' . $f['id'], 'label' => $lbl);
                     }, $fornitori);
-                    $options[] = array('value' => 'cancel', 'label' => '❌ Annulla segnalazione');
+                    $options[] = array('value' => 'admin_only', 'label' => '📋 Invia solo all\'amministratore');
+                    $options[] = array('value' => 'cancel',     'label' => '❌ Annulla segnalazione');
                     wp_send_json_success(array(
-                        'message'      => 'Non riesco a identificare automaticamente il fornitore adatto. Scegli tu dalla lista:',
-                        'next_step'    => 'manual_select_fornitore',
-                        'options'      => $options,
+                        'message'       => 'Non riesco a identificare automaticamente il fornitore adatto. Scegli tu dalla lista:',
+                        'next_step'     => 'manual_select_fornitore',
+                        'options'       => $options,
                         'condominio_id' => $cid,
-                        'problema'     => $input,
+                        'problema'      => $input,
                     ));
                     break;
                 }
-                $msg = 'Ho identificato il fornitore più adatto: <strong>' . esc_html($fornitore['nome']) . '</strong>';
+                $ai_used = count($fornitori) > 1;
+                $msg = $ai_used
+                    ? 'Ho analizzato il problema e identificato il fornitore più adatto: <strong>' . esc_html($fornitore['nome']) . '</strong>'
+                    : 'Il fornitore associato a questo condominio è: <strong>' . esc_html($fornitore['nome']) . '</strong>';
                 if (!empty($fornitore['tipologia'])) $msg .= ' (' . esc_html($fornitore['tipologia']) . ')';
-                $msg .= '<br><br>Il fornitore è corretto?';
+                $msg .= '<br><br>Vuoi procedere con la segnalazione?';
                 wp_send_json_success(array(
                     'message'      => $msg,
                     'next_step'    => 'confirm_fornitore',
@@ -182,9 +185,10 @@ class Marrison_Assistant_Site_Agent {
                     'problema'     => $input,
                     'condominio_id' => $cid,
                     'options'      => array(
-                        array('value' => 'confirm', 'label' => '✅ Sì, procedi'),
-                        array('value' => 'reject',  'label' => '🔄 Fornitore sbagliato'),
-                        array('value' => 'cancel',  'label' => '❌ Annulla segnalazione'),
+                        array('value' => 'confirm',    'label' => '✅ Sì, procedi con il fornitore'),
+                        array('value' => 'admin_only', 'label' => '📋 Invia solo all\'amministratore'),
+                        array('value' => 'reject',     'label' => '🔄 Fornitore sbagliato'),
+                        array('value' => 'cancel',     'label' => '❌ Annulla segnalazione'),
                     ),
                 ));
                 break;
@@ -195,13 +199,24 @@ class Marrison_Assistant_Site_Agent {
                 $fid  = (int) ($context['fornitoreId']  ?? 0);
                 $prob = sanitize_textarea_field($context['problema'] ?? '');
 
-                if ($input === 'confirm' || preg_match('/\b(si|sì|yes|ok|confermo|esatto|giusto|corretto|procedi)\b/i', $input)) {
+                if ($input === 'admin_only') {
                     wp_send_json_success(array(
-                        'message'      => 'Perfetto! Inserisci la tua email così ti invio la conferma della segnalazione.',
-                        'next_step'    => 'collect_email',
+                        'message'       => 'Perfetto! La segnalazione verrà inoltrata all&#8217;amministratore. Vuoi allegare delle foto?',
+                        'next_step'     => 'upload_photos',
+                        'photo_upload'  => true,
+                        'admin_only'    => true,
                         'condominio_id' => $cid,
-                        'fornitore_id'  => $fid,
                         'problema'      => $prob,
+                    ));
+
+                } elseif ($input === 'confirm' || preg_match('/\b(si|sì|yes|ok|confermo|esatto|giusto|corretto|procedi)\b/i', $input)) {
+                    wp_send_json_success(array(
+                        'message'        => 'Perfetto! Vuoi allegare delle foto alla segnalazione? Puoi aggiungerne fino a 5 (max 5MB ciascuna).',
+                        'next_step'      => 'upload_photos',
+                        'photo_upload'   => true,
+                        'condominio_id'  => $cid,
+                        'fornitore_id'   => $fid,
+                        'problema'       => $prob,
                     ));
 
                 } elseif ($input === 'reject' || preg_match('/\b(no|sbagliato|errato|altro|cambia|diverso|cambiare)\b/i', $input)) {
@@ -211,7 +226,8 @@ class Marrison_Assistant_Site_Agent {
                         if (!empty($f['tipologia'])) $lbl .= ' (' . $f['tipologia'] . ')';
                         return array('value' => 'select_forn_' . $f['id'], 'label' => $lbl);
                     }, $fornitori);
-                    $options[] = array('value' => 'cancel', 'label' => '❌ Annulla segnalazione');
+                    $options[] = array('value' => 'admin_only', 'label' => '📋 Invia solo all\'amministratore');
+                    $options[] = array('value' => 'cancel',     'label' => '❌ Annulla segnalazione');
                     wp_send_json_success(array(
                         'message'   => 'Scegli tu il fornitore corretto:',
                         'next_step' => 'manual_select_fornitore',
@@ -239,6 +255,19 @@ class Marrison_Assistant_Site_Agent {
                     ));
                     break;
                 }
+                if ($input === 'admin_only') {
+                    $cid_ao  = (int) ($context['condominioId'] ?? 0);
+                    $prob_ao = sanitize_textarea_field($context['problema'] ?? '');
+                    wp_send_json_success(array(
+                        'message'       => 'Perfetto! La segnalazione verrà inoltrata all&#8217;amministratore. Vuoi allegare delle foto?',
+                        'next_step'     => 'upload_photos',
+                        'photo_upload'  => true,
+                        'admin_only'    => true,
+                        'condominio_id' => $cid_ao,
+                        'problema'      => $prob_ao,
+                    ));
+                    break;
+                }
                 if (preg_match('/^select_forn_(\d+)$/', $input, $m)) {
                     $fid  = (int) $m[1];
                     $post = get_post($fid);
@@ -246,11 +275,12 @@ class Marrison_Assistant_Site_Agent {
                     $cid  = (int) ($context['condominioId'] ?? 0);
                     $prob = sanitize_textarea_field($context['problema'] ?? '');
                     wp_send_json_success(array(
-                        'message'      => 'Selezionato: <strong>' . esc_html($nome) . '</strong>.<br>Inserisci la tua email per ricevere la conferma della segnalazione.',
-                        'next_step'    => 'collect_email',
-                        'fornitore_id' => $fid,
+                        'message'       => 'Selezionato: <strong>' . esc_html($nome) . '</strong>.<br><br>Vuoi allegare delle foto alla segnalazione? Puoi aggiungerne fino a 5 (max 5MB ciascuna).',
+                        'next_step'     => 'upload_photos',
+                        'photo_upload'  => true,
+                        'fornitore_id'  => $fid,
                         'condominio_id' => $cid,
-                        'problema'     => $prob,
+                        'problema'      => $prob,
                     ));
                 } else {
                     wp_send_json_success(array(
@@ -261,7 +291,39 @@ class Marrison_Assistant_Site_Agent {
                 }
                 break;
 
-            // ── Passo 3: raccolta email + invio ─────────────────────────────
+            // ── Passo 2d: upload foto (opzionale) ────────────────────
+            case 'upload_photos':
+                $cid  = (int) ($context['condominioId'] ?? 0);
+                $fid  = (int) ($context['fornitoreId']  ?? 0);
+                $prob = sanitize_textarea_field($context['problema'] ?? '');
+
+                // Valida e raccoglie gli ID delle foto già caricate via AJAX
+                $photo_ids = array();
+                if (!empty($context['photoIds']) && is_array($context['photoIds'])) {
+                    foreach ($context['photoIds'] as $pid) {
+                        $pid = basename(sanitize_file_name($pid));
+                        if (preg_match('/^marr_[a-f0-9]+\.(jpg|jpeg|png|gif|webp|heic)$/i', $pid)) {
+                            $photo_ids[] = $pid;
+                        }
+                    }
+                    $photo_ids = array_slice($photo_ids, 0, 5);
+                }
+
+                $foto_note  = count($photo_ids) > 0 ? count($photo_ids) . ' foto allegate. ' : '';
+                $admin_only = !empty($context['adminOnly']);
+
+                wp_send_json_success(array(
+                    'message'       => $foto_note . 'Inserisci la tua email per ricevere la conferma della segnalazione.',
+                    'next_step'     => 'collect_email',
+                    'condominio_id' => $cid,
+                    'fornitore_id'  => $fid,
+                    'problema'      => $prob,
+                    'photo_ids'     => $photo_ids,
+                    'admin_only'    => $admin_only,
+                ));
+                break;
+
+            // ── Passo 3: raccolta email + invio ─────────────────
             case 'collect_email':
                 $email = sanitize_email($input);
                 if (!is_email($email)) {
@@ -274,10 +336,11 @@ class Marrison_Assistant_Site_Agent {
                     ));
                     break;
                 }
-                $cid  = (int) ($context['condominioId'] ?? 0);
-                $fid  = (int) ($context['fornitoreId']  ?? 0);
-                $prob = sanitize_textarea_field($context['problema'] ?? '');
-                if (!$cid || !$fid || empty($prob)) {
+                $cid        = (int) ($context['condominioId'] ?? 0);
+                $fid        = (int) ($context['fornitoreId']  ?? 0);
+                $prob       = sanitize_textarea_field($context['problema'] ?? '');
+                $admin_only = !empty($context['adminOnly']);
+                if (!$cid || empty($prob) || (!$admin_only && !$fid)) {
                     wp_send_json_success(array(
                         'message'   => 'Si è verificato un errore. Ricominciamo dall\'inizio.',
                         'next_step' => 'find_condominio',
@@ -285,13 +348,28 @@ class Marrison_Assistant_Site_Agent {
                     ));
                     break;
                 }
-                $results     = $condo->send_emails($cid, $fid, $prob, $email);
+                // Recupera gli ID delle foto dal contesto
+                $photo_ids = array();
+                if (!empty($context['photoIds']) && is_array($context['photoIds'])) {
+                    foreach ($context['photoIds'] as $pid) {
+                        $pid = basename(sanitize_file_name($pid));
+                        if (preg_match('/^marr_[a-f0-9]+\.(jpg|jpeg|png|gif|webp|heic)$/i', $pid)) {
+                            $photo_ids[] = $pid;
+                        }
+                    }
+                    $photo_ids = array_slice($photo_ids, 0, 5);
+                }
+                $results     = $condo->send_emails($cid, $fid, $prob, $email, $photo_ids, $admin_only);
                 $forn_post   = get_post($fid);
                 $forn_nome   = $forn_post ? $forn_post->post_title : '';
                 $success_cnt = count(array_filter($results));
                 if ($success_cnt > 0) {
                     $msg  = '✅ <strong>Segnalazione inviata!</strong><br>';
-                    $msg .= 'Il fornitore <strong>' . esc_html($forn_nome) . '</strong> è stato contattato.<br>';
+                    if ($admin_only) {
+                        $msg .= 'La segnalazione è stata inoltrata all&#8217;<strong>amministratore</strong>.<br>';
+                    } else {
+                        $msg .= 'Il fornitore <strong>' . esc_html($forn_nome) . '</strong> è stato contattato.<br>';
+                    }
                     $msg .= 'Riceverai una conferma a <strong>' . esc_html($email) . '</strong>.<br><br>';
                     $msg .= 'Hai un\'altra segnalazione? Dimmi pure il condominio.';
                     wp_send_json_success(array(
@@ -313,6 +391,59 @@ class Marrison_Assistant_Site_Agent {
         }
     }
     
+    /**
+     * Gestisce l'upload di una singola foto via AJAX.
+     * Max 5MB, solo immagini. Salva in wp-content/uploads/marrison-temp/
+     */
+    public function handle_photo_upload() {
+        check_ajax_referer('marrison_agent_nonce', 'nonce');
+
+        if (empty($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+            $err = $_FILES['photo']['error'] ?? 'nessun file';
+            wp_send_json_error(array('message' => 'Errore upload: ' . $err));
+        }
+
+        $file = $_FILES['photo'];
+
+        // Valida dimensione (max 5MB)
+        if ($file['size'] > 5 * 1024 * 1024) {
+            wp_send_json_error(array('message' => 'Il file supera i 5MB consentiti.'));
+        }
+
+        // Valida tipo: solo immagini
+        $allowed_types = array('image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic');
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime  = $finfo->file($file['tmp_name']);
+        if (!in_array($mime, $allowed_types, true)) {
+            wp_send_json_error(array('message' => 'Tipo file non consentito. Solo immagini JPG, PNG, GIF, WebP.'));
+        }
+
+        $filetype = wp_check_filetype($file['name']);
+        $ext      = strtolower($filetype['ext'] ?: 'jpg');
+
+        // Crea cartella temp protetta
+        $upload_dir = wp_upload_dir();
+        $temp_dir   = $upload_dir['basedir'] . '/marrison-temp/';
+        if (!is_dir($temp_dir)) {
+            wp_mkdir_p($temp_dir);
+            file_put_contents($temp_dir . '.htaccess', "Options -Indexes\nDeny from all\n");
+            file_put_contents($temp_dir . 'index.php', '<?php // Silence is golden');
+        }
+
+        $temp_name = 'marr_' . bin2hex(random_bytes(8)) . '.' . $ext;
+        $temp_path = $temp_dir . $temp_name;
+
+        if (!move_uploaded_file($file['tmp_name'], $temp_path)) {
+            wp_send_json_error(array('message' => 'Impossibile salvare il file. Riprova.'));
+        }
+
+        wp_send_json_success(array(
+            'id'   => $temp_name,
+            'name' => sanitize_file_name($file['name']),
+            'size' => $file['size'],
+        ));
+    }
+
     /**
      * Carica script e stili per il widget.
      * Chiamato direttamente dallo shortcode per compatibilità con page builder.
@@ -347,7 +478,7 @@ class Marrison_Assistant_Site_Agent {
             'ajaxUrl'     => admin_url('admin-ajax.php'),
             'nonce'       => wp_create_nonce('marrison_agent_nonce'),
             'welcome'     => $welcome_msg,
-            'placeholder' => get_option('marrison_assistant_site_agent_placeholder', 'Scrivi un messaggio...'),
+            'placeholder' => get_option('marrison_assistant_site_agent_placeholder', 'Es: Condominio Primavera, oppure Via Roma 10'),
             'title'       => get_option('marrison_assistant_site_agent_title', 'Assistente AI'),
             'name'        => $assistant_name,
             'isTyping'    => 'Sto scrivendo...',
@@ -404,9 +535,8 @@ class Marrison_Assistant_Site_Agent {
         $width  = esc_attr($atts['width']);
 
         $privacy_url = get_privacy_policy_url();
-        $pb_text     = Marrison_Assistant_White_Label::powered_by_text();
-        $pb_url      = Marrison_Assistant_White_Label::powered_by_url();
-        $favicon_url = get_site_icon_url(32);
+        $custom_avatar = get_option('marrison_assistant_site_agent_avatar', '');
+        $favicon_url   = $custom_avatar ?: get_site_icon_url(64);
 
         ob_start();
         ?>
@@ -425,7 +555,8 @@ class Marrison_Assistant_Site_Agent {
                             <span class="marrison-avatar-dot"></span>
                         </div>
                         <div class="marrison-header-info">
-                            <div class="marrison-header-name"><?php echo esc_html($title); ?></div>
+                            <div class="marrison-header-name"><?php echo esc_html($assistant_name); ?></div>
+                            <div class="marrison-header-title"><?php echo esc_html($title); ?></div>
                             <div class="marrison-header-status">
                                 <span class="marrison-status-dot"></span>
                                 Online<?php if (!is_user_logged_in()): ?> &middot; <span class="marrison-guest-label">Guest</span><?php endif; ?>
@@ -458,14 +589,12 @@ class Marrison_Assistant_Site_Agent {
                         </svg>
                     </button>
                 </div>
-                <!-- Privacy notice -->
-                <div id="marrison-privacy-notice" class="marrison-privacy-notice">
-                    <span><?php esc_html_e('Scrivendo in questa chat accetti la nostra', 'marrison-assistant'); ?> <a href="<?php echo esc_url($privacy_url ?: '#'); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('privacy policy', 'marrison-assistant'); ?></a>.</span>
-                    <button type="button" class="marrison-privacy-close" aria-label="<?php esc_attr_e('Chiudi', 'marrison-assistant'); ?>">&times;</button>
-                </div>
-                <!-- Footer credit -->
-                <div style="padding: 4px 0; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <a href="<?php echo esc_url($pb_url); ?>" target="_blank" rel="noopener noreferrer" style="font-size: 10px; color: <?php echo esc_attr($header_color); ?>; text-decoration: none; opacity: 0.7; transition: opacity 0.2s;"><?php echo esc_html($pb_text); ?></a>
+                <!-- Footer permanente: privacy + branding -->
+                <div class="marrison-chat-footer">
+                    <?php if ($privacy_url): ?>
+                    <a href="<?php echo esc_url($privacy_url); ?>" target="_blank" rel="noopener noreferrer" class="marrison-footer-privacy">Privacy Policy</a>
+                    <?php else: ?><span></span><?php endif; ?>
+                    <a href="https://marrisonlab.com" target="_blank" rel="noopener noreferrer" class="marrison-footer-branding">Powered by MarrisonLab</a>
                 </div>
             </div>
         </div>
@@ -521,7 +650,7 @@ class Marrison_Assistant_Site_Agent {
                 <div class="marrison-chat-header">
                     <div class="marrison-header-left">
                         <div class="marrison-header-avatar">
-                            <?php $favicon_url = get_site_icon_url(32); ?>
+                            <?php $favicon_url = get_option('marrison_assistant_site_agent_avatar', '') ?: get_site_icon_url(64); ?>
                             <?php if ($favicon_url): ?>
                                 <img src="<?php echo esc_url($favicon_url); ?>" alt="" class="marrison-avatar-img">
                             <?php else: ?>
@@ -530,7 +659,8 @@ class Marrison_Assistant_Site_Agent {
                             <span class="marrison-avatar-dot"></span>
                         </div>
                         <div class="marrison-header-info">
-                            <div class="marrison-header-name"><?php echo esc_html($title); ?></div>
+                            <div class="marrison-header-name"><?php echo esc_html($assistant_name); ?></div>
+                            <div class="marrison-header-title"><?php echo esc_html($title); ?></div>
                             <div class="marrison-header-status">
                                 <span class="marrison-status-dot"></span>
                                 Online<?php if (!is_user_logged_in()): ?> &middot; <span class="marrison-guest-label">Guest</span><?php endif; ?>
@@ -601,19 +731,13 @@ class Marrison_Assistant_Site_Agent {
                         </svg>
                     </button>
                 </div>
-                <!-- Privacy notice -->
+                <!-- Footer permanente: privacy + branding -->
                 <?php $privacy_url = get_privacy_policy_url(); ?>
-                <div id="marrison-privacy-notice" class="marrison-privacy-notice">
-                    <span><?php esc_html_e('Scrivendo in questa chat accetti la nostra', 'marrison-assistant'); ?> <a href="<?php echo esc_url($privacy_url ?: '#'); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('privacy policy', 'marrison-assistant'); ?></a>.</span>
-                    <button type="button" class="marrison-privacy-close" aria-label="<?php esc_attr_e('Chiudi', 'marrison-assistant'); ?>">&times;</button>
-                </div>
-                <!-- Footer credit -->
-                <div style="padding: 4px 0; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <?php
-                    $pb_text = Marrison_Assistant_White_Label::powered_by_text();
-                    $pb_url  = Marrison_Assistant_White_Label::powered_by_url();
-                    ?>
-                    <a href="<?php echo esc_url($pb_url); ?>" target="_blank" rel="noopener noreferrer" style="font-size: 10px; color: <?php echo esc_attr($header_color); ?>; text-decoration: none; opacity: 0.7; transition: opacity 0.2s;"><?php echo esc_html($pb_text); ?></a>
+                <div class="marrison-chat-footer">
+                    <?php if ($privacy_url): ?>
+                    <a href="<?php echo esc_url($privacy_url); ?>" target="_blank" rel="noopener noreferrer" class="marrison-footer-privacy">Privacy Policy</a>
+                    <?php else: ?><span></span><?php endif; ?>
+                    <a href="https://marrisonlab.com" target="_blank" rel="noopener noreferrer" class="marrison-footer-branding">Powered by MarrisonLab</a>
                 </div>
             </div>
         </div>

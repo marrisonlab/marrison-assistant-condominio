@@ -18,6 +18,8 @@ jQuery(document).ready(function($) {
         condominioId:  null,
         fornitoreId:   null,
         problema:      null,
+        photoIds:      [],
+        adminOnly:     false,
     };
 
     // Chiavi sessionStorage
@@ -51,6 +53,8 @@ jQuery(document).ready(function($) {
                 chatState.condominioId = st.condominioId || null;
                 chatState.fornitoreId  = st.fornitoreId  || null;
                 chatState.problema     = st.problema     || null;
+                chatState.photoIds     = st.photoIds     || [];
+                chatState.adminOnly    = st.adminOnly    || false;
             }
             if (savedOpen === '1' && marrisonAgent.mode !== 'inline') {
                 chatWindow.addClass('open');
@@ -109,18 +113,6 @@ jQuery(document).ready(function($) {
             });
         }
 
-        // Privacy notice: nascondi se già chiusa in precedenza
-        try {
-            if (localStorage.getItem('marrison_privacy_dismissed') === '1') {
-                $('#marrison-privacy-notice').hide();
-            }
-        } catch(e) {}
-
-        // Privacy notice: chiudi e salva preferenza
-        $(document).on('click', '.marrison-privacy-close', function() {
-            $('#marrison-privacy-notice').slideUp(200);
-            try { localStorage.setItem('marrison_privacy_dismissed', '1'); } catch(e) {}
-        });
     }
     
     // Toggle chat window
@@ -174,10 +166,18 @@ jQuery(document).ready(function($) {
         if (data.condominio_id) chatState.condominioId = data.condominio_id;
         if (data.fornitore_id) chatState.fornitoreId  = data.fornitore_id;
         if (data.problema)     chatState.problema     = data.problema;
+        if (data.photo_ids)           chatState.photoIds  = data.photo_ids;
+        if (data.admin_only !== undefined) chatState.adminOnly = !!data.admin_only;
         if (data.reset) {
             chatState.condominioId = null;
             chatState.fornitoreId  = null;
             chatState.problema     = null;
+            chatState.photoIds     = [];
+            chatState.adminOnly    = false;
+        }
+        // Mostra widget upload foto
+        if (data.photo_upload) {
+            showPhotoUploadWidget();
         }
         // Mostra bottoni di selezione
         if (data.options && data.options.length > 0) {
@@ -200,6 +200,120 @@ jQuery(document).ready(function($) {
         chatMessages.append($wrap);
         scrollToBottom();
     }
+
+    // ── Widget upload foto ──────────────────────────────────────────────────
+    function showPhotoUploadWidget() {
+        $('.marrison-photo-widget').remove();
+        const $wrap = $(`
+            <div class="marrison-photo-widget">
+                <div class="marrison-photo-thumbs" id="marrison-photo-thumbs"></div>
+                <div class="marrison-photo-actions">
+                    <button type="button" id="marrison-add-photo-btn" class="marrison-photo-btn">
+                        📷 Aggiungi foto
+                    </button>
+                    <button type="button" id="marrison-proceed-upload-btn" class="marrison-photo-btn marrison-photo-proceed">
+                        ➡️ Procedi
+                    </button>
+                </div>
+                <p class="marrison-photo-hint">Max 5 foto · Max 5MB ciascuna · JPG, PNG, WebP</p>
+                <input type="file" id="marrison-photo-input" accept="image/*" multiple style="display:none">
+            </div>
+        `);
+        chatMessages.append($wrap);
+        scrollToBottom();
+
+        $('#marrison-add-photo-btn').on('click', function() {
+            if (chatState.photoIds.length >= 5) {
+                return;
+            }
+            $('#marrison-photo-input').val('').trigger('click');
+        });
+
+        $('#marrison-photo-input').on('change', function() {
+            const files = Array.from(this.files || []);
+            const remaining = 5 - chatState.photoIds.length;
+            files.slice(0, remaining).forEach(uploadSinglePhoto);
+        });
+
+        $('#marrison-proceed-upload-btn').on('click', function() {
+            if ($('.marrison-photo-uploading').length > 0) {
+                return; // still uploading
+            }
+            $('.marrison-photo-widget').fadeOut(150, function() { $(this).remove(); });
+            addMessage('Procedi', 'user');
+            sendStepRequest('proceed_upload', 'Procedi');
+        });
+    }
+
+    function uploadSinglePhoto(file) {
+        if (file.size > 5 * 1024 * 1024) {
+            addMessage('⚠️ "' + file.name + '" supera i 5MB.', 'bot');
+            return;
+        }
+
+        const tempId = 'tmp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const $thumb = $(`
+                <div class="marrison-photo-thumb marrison-photo-uploading" id="${tempId}">
+                    <img src="${e.target.result}" alt="">
+                    <div class="marrison-photo-thumb-overlay">⏳</div>
+                    <button type="button" class="marrison-photo-remove" data-temp="${tempId}">✕</button>
+                </div>
+            `);
+            $('#marrison-photo-thumbs').append($thumb);
+            scrollToBottom();
+        };
+        reader.readAsDataURL(file);
+
+        const fd = new FormData();
+        fd.append('action', 'marrison_upload_photo');
+        fd.append('nonce',  marrisonAgent.nonce);
+        fd.append('photo',  file);
+
+        $.ajax({
+            url:         marrisonAgent.ajaxUrl,
+            type:        'POST',
+            data:        fd,
+            processData: false,
+            contentType: false,
+        }).done(function(resp) {
+            if (resp.success) {
+                chatState.photoIds.push(resp.data.id);
+                $('#' + tempId)
+                    .removeClass('marrison-photo-uploading')
+                    .attr('data-server-id', resp.data.id)
+                    .find('.marrison-photo-thumb-overlay').text('✅');
+                // Aggiorna pulsante aggiungi
+                if (chatState.photoIds.length >= 5) {
+                    $('#marrison-add-photo-btn').prop('disabled', true).text('Max 5 foto raggiunto');
+                }
+            } else {
+                $('#' + tempId).remove();
+                addMessage('⚠️ Upload fallito: ' + (resp.data.message || 'errore'), 'bot');
+            }
+        }).fail(function() {
+            $('#' + tempId).remove();
+            addMessage('⚠️ Errore di connessione durante l\'upload. Riprova.', 'bot');
+        });
+    }
+
+    // Rimozione foto singola
+    $(document).on('click', '.marrison-photo-remove', function() {
+        const tempId = $(this).data('temp');
+        // Nota: la foto è già sul server, rimozione lato UI soltanto;
+        // verrà ignorata se non presente in chatState.photoIds al momento dell'invio.
+        // Per semplicità, non eliminiamo il file server-side in questa fase.
+        const $thumb = $('#' + tempId);
+        const serverId = $thumb.data('server-id');
+        if (serverId) {
+            chatState.photoIds = chatState.photoIds.filter(id => id !== serverId);
+        }
+        $thumb.remove();
+        if (chatState.photoIds.length < 5) {
+            $('#marrison-add-photo-btn').prop('disabled', false).text('📷 Aggiungi foto');
+        }
+    });
 
     // Invio richiesta step-based al server
     function sendStepRequest(stepValue, stepLabel) {

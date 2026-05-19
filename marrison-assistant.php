@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: MA Condominio
- * Plugin URI: https://github.com/marrisonlab/marrison-assistant
+ * Plugin URI: https://github.com/marrisonlab/marrison-assistant-condominio
  * Description: Asssistente professionale AI per i tuoi clienti
- * Version: 1.4.0
+ * Version: 1.0.0
  * Author: Marrisonlab
  * Author URI: https://marrisonlab.com
  * Text Domain: marrison-assistant
@@ -21,21 +21,19 @@ if (defined('MARRISON_ASSISTANT_VERSION')) {
 }
 
 // Definisci costanti del plugin
-define('MARRISON_ASSISTANT_VERSION', '1.4.0');
+define('MARRISON_ASSISTANT_VERSION', '1.0.0');
 define('MARRISON_ASSISTANT_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MARRISON_ASSISTANT_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 error_log('Marrison Assistant: Loading plugin v' . MARRISON_ASSISTANT_VERSION . ' from ' . MARRISON_ASSISTANT_PLUGIN_DIR);
 
 // Carica i file necessari
-require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-white-label.php';
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-admin.php';
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-api.php';
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-gemini.php';
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-condominio.php';
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-site-agent.php';
-require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-content-scanner.php';
-require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-order-scanner.php';
+require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-requests.php';
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-auth.php';
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-updater.php';
 
@@ -47,8 +45,6 @@ class Marrison_Assistant {
     private $admin;
     private $api;
     private $gemini;
-    private $content_scanner;
-    private $order_scanner;
     private $auth;
     private $site_agent;
     
@@ -57,53 +53,29 @@ class Marrison_Assistant {
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
-        // White-label: sovrascrive nome e autore nella lista plugin WP (solo se configurato)
-        add_filter('all_plugins', array($this, 'apply_white_label_plugin_info'));
-
         // Link impostazioni nella lista plugin
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'add_settings_link'));
     }
 
-    /**
-     * Sovrascrive le info del plugin nella lista WP admin in base a white-label.json.
-     * Versione e aggiornamenti restano invariati.
-     */
-    public function apply_white_label_plugin_info($plugins) {
-        if (!Marrison_Assistant_White_Label::is_active()) {
-            return $plugins;
-        }
-        $key = plugin_basename(__FILE__);
-        if (!isset($plugins[$key])) {
-            return $plugins;
-        }
-        $name       = Marrison_Assistant_White_Label::plugin_name();
-        $author     = Marrison_Assistant_White_Label::author();
-        $author_url = Marrison_Assistant_White_Label::author_url();
-
-        $plugins[$key]['Name']       = $name;
-        $plugins[$key]['Title']      = $name;
-        $plugins[$key]['Author']     = '<a href="' . esc_url($author_url) . '">' . esc_html($author) . '</a>';
-        $plugins[$key]['AuthorName'] = $author;
-        $plugins[$key]['AuthorURI']  = $author_url;
-        $plugins[$key]['PluginURI']  = $author_url;
-
-        return $plugins;
-    }
-    
     public function init() {
         // Inizializza tutte le classi
         $this->admin = new Marrison_Assistant_Admin();
         $this->api = new Marrison_Assistant_API();
         $this->gemini = new Marrison_Assistant_Gemini();
         $this->site_agent = new Marrison_Assistant_Site_Agent();
-        $this->content_scanner = new Marrison_Assistant_Content_Scanner();
-        $this->order_scanner = new Marrison_Assistant_Order_Scanner();
         $this->auth = new Marrison_Assistant_Auth();
         
         // Carica le opzioni di default
         $this->set_default_options();
 
         // Migrazione 1.4.0: sostituisce il vecchio messaggio di benvenuto generico
+        // Aggiorna placeholder obsoleto
+        $old_placeholders = array('Scrivi un messaggio...', 'Es: Via Roma 10', 'Es: Giella 29, oppure Via Roma 10');
+        $cur_ph = get_option('marrison_assistant_site_agent_placeholder', '');
+        if (in_array($cur_ph, $old_placeholders, true)) {
+            update_option('marrison_assistant_site_agent_placeholder', 'Es: Condominio Primavera, oppure Via Roma 10');
+        }
+
         $old_messages = array(
             'Ciao! Come posso aiutarti oggi?',
             'Ciao, sono {name}, il tuo assistente virtuale, come posso aiutarti?',
@@ -125,7 +97,6 @@ class Marrison_Assistant {
             'gemini_api_key' => '',
             'custom_prompt' => 'Sei un assistente AI per questo sito web. Rispondi in modo professionale e utile basandoti sui contenuti del sito.',
             'logged_only' => false,
-            'last_content_scan' => 0,
             // Opzioni agente sito
             'enable_site_agent' => false,
             'site_agent_position' => 'bottom-right',
@@ -133,8 +104,10 @@ class Marrison_Assistant {
             'site_agent_title' => 'Assistente AI',
             'site_agent_name' => 'Assistente',
             'site_agent_welcome' => 'Ciao! Sono {name}, il tuo assistente condominiale. Dimmi il nome o l\'indirizzo del tuo condominio per iniziare una segnalazione.',
-            'site_agent_placeholder' => 'Es: Via Roma 10',
+            'site_agent_placeholder' => 'Es: Condominio Primavera, oppure Via Roma 10',
+            'site_agent_avatar'      => '',
             'site_agent_logged_only' => false,
+            'condominio_admin_email' => '',
             // Colori personalizzabili
             'site_agent_icon_color' => '#667eea',      // Colore icona fluttuante
             'site_agent_header_color' => '#667eea',    // Colore testata chat
@@ -158,16 +131,8 @@ class Marrison_Assistant {
      */
     public function activate() {
         $this->set_default_options();
+        Marrison_Assistant_Requests::create_table();
         flush_rewrite_rules();
-
-        // Prima scansione immediata all'installazione
-        $scanner = new Marrison_Assistant_Content_Scanner();
-        $scanner->scan_all_content();
-
-        // Schedula la scansione automatica ogni 24 ore
-        if (!wp_next_scheduled('marrison_assistant_auto_scan')) {
-            wp_schedule_event(time() + DAY_IN_SECONDS, 'daily', 'marrison_assistant_auto_scan');
-        }
     }
     
     /**
@@ -203,36 +168,79 @@ class Marrison_Assistant {
 error_log('Marrison Assistant: Initializing main plugin class');
 new Marrison_Assistant();
 
-// Cron: scansione automatica contenuti ogni 24 ore
-add_action('marrison_assistant_auto_scan', function() {
-    if (!class_exists('Marrison_Assistant_Content_Scanner')) {
-        require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-content-scanner.php';
-    }
-    $scanner = new Marrison_Assistant_Content_Scanner();
-    $scanner->scan_all_content();
-    error_log('Marrison Assistant: auto-scan completato via cron - ' . current_time('mysql'));
-});
-
-// Assicura che il cron sia pianificato (utile dopo update plugin)
+// Aggiorna la tabella DB se necessario (dopo aggiornamenti plugin)
 add_action('plugins_loaded', function() {
-    if (!wp_next_scheduled('marrison_assistant_auto_scan')) {
-        wp_schedule_event(time() + DAY_IN_SECONDS, 'daily', 'marrison_assistant_auto_scan');
-    }
+    Marrison_Assistant_Requests::create_table();
 });
 
-// REST endpoint: Commander pinga questo per invalidare la cache white-label
-add_action('rest_api_init', function() {
-    register_rest_route('marrison-assistant/v1', '/flush-white-label', array(
-        'methods'             => 'POST',
-        'permission_callback' => '__return_true',
-        'callback'            => function(WP_REST_Request $request) {
-            $token    = sanitize_text_field($request->get_param('token') ?? '');
-            $expected = md5(rtrim(get_site_url(), '/') . 'marrison_wl_flush_v1');
-            if (!hash_equals($expected, $token)) {
-                return new WP_REST_Response(array('success' => false, 'message' => 'Token non valido'), 403);
-            }
-            Marrison_Assistant_White_Label::flush_cache();
-            return new WP_REST_Response(array('success' => true, 'message' => 'Cache white-label svuotata'), 200);
-        },
-    ));
+// ── Token conferma intervento (nessun login richiesto) ──────────────────────
+add_action('init', function() {
+    if (!isset($_GET['marrison_confirm'])) return;
+    $token = sanitize_text_field(wp_unslash($_GET['marrison_confirm']));
+    if (!$token || strlen($token) < 10) return;
+
+    $result = Marrison_Assistant_Requests::confirm_by_token($token);
+    $site   = get_bloginfo('name');
+
+    if (!$result) {
+        $icon  = '✗';
+        $color = '#ef4444';
+        $bg    = '#fef2f2';
+        $title = 'Link non valido';
+        $msg   = 'Il link utilizzato non è valido o è già scaduto.';
+    } elseif (!empty($result->_already)) {
+        $icon  = '✓';
+        $color = '#f59e0b';
+        $bg    = '#fffbeb';
+        $title = 'Intervento già confermato';
+        $msg   = 'Questo intervento risulta già confermato come completato.';
+    } else {
+        $icon  = '✓';
+        $color = '#22c55e';
+        $bg    = '#f0fdf4';
+        $title = 'Intervento completato';
+        $msg   = 'Grazie! L\'intervento per il condominio <strong>' . esc_html($result->condominio_name) . '</strong> è stato confermato come completato.';
+
+        // ── Notifiche di chiusura intervento ────────────────────────────────
+        Marrison_Assistant_Requests::send_completion_emails($result);
+    }
+
+    status_header(200);
+    nocache_headers();
+    header('Content-Type: text/html; charset=utf-8');
+    ?>
+    <!DOCTYPE html>
+    <html lang="it">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><?php echo esc_html($title . ' — ' . $site); ?></title>
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                   background: #f8fafc; display: flex; align-items: center; justify-content: center;
+                   min-height: 100vh; padding: 24px; }
+            .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.10);
+                    max-width: 480px; width: 100%; padding: 40px 36px; text-align: center; }
+            .icon { width: 72px; height: 72px; border-radius: 50%; background: <?php echo $bg; ?>;
+                    color: <?php echo $color; ?>; font-size: 36px; line-height: 72px;
+                    margin: 0 auto 24px; border: 3px solid <?php echo $color; ?>; }
+            h1 { font-size: 22px; color: #1e293b; margin-bottom: 12px; }
+            p  { font-size: 15px; color: #475569; line-height: 1.6; }
+            .site { margin-top: 32px; font-size: 12px; color: #94a3b8; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="icon"><?php echo $icon; ?></div>
+            <h1><?php echo esc_html($title); ?></h1>
+            <p><?php echo $msg; ?></p>
+            <p class="site"><?php echo esc_html($site); ?></p>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
 });
+
+

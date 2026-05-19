@@ -196,7 +196,8 @@ class Marrison_Assistant_Gemini {
         // Stima locale dei token (italiano: ~3.5 char/token)
         $prompt_bytes  = strlen($full_prompt);
         $prompt_tokens_est = (int) ceil($prompt_bytes / 3.5);
-        // (token stats logged after Commander response via usageMetadata)
+
+        error_log('Marrison Assistant: call_commander START - intent=' . $this->current_intent . ' prompt_bytes=' . $prompt_bytes . ' site_url=' . $site_url);
 
         // Sanitizza il prompt: rimuove caratteri non-UTF-8 che rompono json_encode
         $clean_prompt = mb_convert_encoding($full_prompt, 'UTF-8', 'UTF-8');
@@ -247,6 +248,11 @@ class Marrison_Assistant_Gemini {
         }
 
         // Salva nel log token per la tab Analytics
+        // Usa stima se Commander non restituisce usageMetadata (mai lasciare tutti null)
+        if ($real_prompt === null) $real_prompt = $prompt_tokens_est;
+        if ($real_output === null) $real_output = 0;
+        if ($real_total  === null) $real_total  = $real_prompt + $real_output;
+
         $log_entry = array(
             'time'              => time(),
             'timestamp'         => current_time('mysql'),
@@ -256,6 +262,7 @@ class Marrison_Assistant_Gemini {
             'prompt_tokens_real'=> $real_prompt,
             'output_tokens'     => $real_output,
             'total_tokens'      => $real_total,
+            'via'               => 'commander',
         );
 
         $log = get_option('marrison_assistant_token_log', array());
@@ -719,6 +726,8 @@ class Marrison_Assistant_Gemini {
         $endpoint = trailingslashit($commander_url) . 'wp-json/marrison-commander/v1/log-token';
         $site_url = get_site_url();
 
+        error_log('Marrison Assistant: invio token log al Commander - site_url=' . $site_url . ' tokens=' . ($log_entry['total_tokens'] ?? 'n/d'));
+
         // Prepara i dati da inviare
         $payload = array(
             'site_url'  => $site_url,
@@ -736,6 +745,8 @@ class Marrison_Assistant_Gemini {
             error_log('Marrison Assistant: Errore invio log al Commander - ' . $response->get_error_message());
         } else {
             $http_code = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+            error_log('Marrison Assistant: Commander risposta HTTP ' . $http_code . ' body=' . $body);
             if ($http_code !== 200) {
                 error_log('Marrison Assistant: Commander ha risposto HTTP ' . $http_code . ' per log-token');
             }

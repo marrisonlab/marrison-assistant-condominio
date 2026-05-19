@@ -29,13 +29,25 @@ class Marrison_Assistant_Condominio {
         $query = sanitize_text_field(trim($query));
         if ($query === '') return array();
 
-        // Tokenizza: parole >= 3 caratteri (evita "di", "il", "la", "via" è mantenuto)
-        $words = array_values(array_unique(array_filter(
-            preg_split('/[\s,]+/', mb_strtolower($query)),
+        // Stopwords: prefissi stradali e articoli italiani che non aiutano la ricerca
+        $stopwords = array(
+            'via', 'viale', 'piazza', 'p.zza', 'corso', 'c.so', 'vicolo', 'strada',
+            'largo', 'borgo', 'contrada', 'c.da', 'loc', 'localita', 'località',
+            'del', 'della', 'delle', 'dei', 'degli', 'di', 'da', 'in', 'su',
+            'il', 'la', 'lo', 'le', 'gli', 'un', 'una', 'al', 'alla',
+        );
+
+        // Tokenizza: parole >= 2 caratteri, escluse stopwords
+        $all_words = array_values(array_unique(array_filter(
+            preg_split('/[\s,\.]+/', mb_strtolower($query)),
             function ($w) { return mb_strlen($w) >= 2; }
         )));
+        $words = array_values(array_filter($all_words, function($w) use ($stopwords) {
+            return !in_array($w, $stopwords, true);
+        }));
+        // Se tutti i token erano stopwords, usa i token originali
         if (empty($words)) {
-            $words = array(mb_strtolower($query));
+            $words = $all_words ?: array(mb_strtolower($query));
         }
 
         $scored = array(); // post_id => punteggio
@@ -61,6 +73,12 @@ class Marrison_Assistant_Condominio {
 
         if (empty($scored)) return array();
 
+        // Soglia minima: richiedere che ogni token significativo abbia contribuito almeno 1 punto.
+        // Score minimo atteso = numero di parole significative (1 pt per match meta, 2 per titolo).
+        $min_score = count($words);
+        $scored = array_filter($scored, function($s) use ($min_score) { return $s >= $min_score; });
+        if (empty($scored)) return array();
+
         arsort($scored);
         $ordered_ids = array_slice(array_keys($scored), 0, 5);
 
@@ -83,11 +101,12 @@ class Marrison_Assistant_Condominio {
             if (!isset($post_map[$id])) continue;
             $p         = $post_map[$id];
             $indirizzo = get_post_meta($id, 'indirizzo_condominio', true);
+            $display = $indirizzo ? 'Condominio di ' . $indirizzo : $p->post_title;
             $results[] = array(
                 'id'        => $id,
                 'nome'      => $p->post_title,
                 'indirizzo' => $indirizzo ?: '',
-                'label'     => $p->post_title . ($indirizzo ? ' — ' . $indirizzo : ''),
+                'label'     => $display,
             );
         }
         return $results;
@@ -327,13 +346,18 @@ class Marrison_Assistant_Condominio {
     private function get_fornitori_ids_db($condominio_id) {
         global $wpdb;
         $table = $wpdb->prefix . 'jet_rel_items';
+        $alt_table = $wpdb->prefix . 'jet_rel_default';
 
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") !== $table) {
+        // Usa ma_jet_rel_default se esiste (altrimenti fallback a standard)
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$alt_table}'") === $alt_table) {
+            $this->mlog('uso tabella ma_jet_rel_default');
+            $table = $alt_table;
+        } elseif ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") !== $table) {
             $this->mlog('tabella ' . $table . ' non trovata');
             return array();
         }
 
-        // Rileva le colonne disponibili per compatibilita' con diverse versioni JetEngine
+        // Colnote note: _ID, created, rel_id, parent_rel, parent_object_id, child_object_id
         $cols = $wpdb->get_col('DESCRIBE ' . $table, 0);
         $this->mlog('colonne ' . $table . ': ' . implode(', ', $cols));
 
@@ -347,10 +371,6 @@ class Marrison_Assistant_Condominio {
             $this->mlog('struttura tabella JetEngine non riconosciuta');
             return array();
         }
-
-        // Conta righe totali per diagnostica
-        $total = (int) $wpdb->get_var('SELECT COUNT(*) FROM ' . $table);
-        $this->mlog('righe totali in ' . $table . ': ' . $total);
 
         // Legge in entrambe le direzioni (parent->child e child->parent)
         $rows = $wpdb->get_results($wpdb->prepare(
@@ -392,10 +412,6 @@ class Marrison_Assistant_Condominio {
         if (empty($fornitori)) {
             return null;
         }
-        if (count($fornitori) === 1) {
-            return $fornitori[0];
-        }
-
         $gemini = new Marrison_Assistant_Gemini();
 
         $sections = array_map(function ($f) {
@@ -415,15 +431,16 @@ class Marrison_Assistant_Condominio {
             "PASSO 1 — Classifica il problema:\n" .
             "Leggi il problema e determina che tipo di intervento richiede. Esempi:\n" .
             "- Acqua, allagamento, perdita, umidità, tubature, scarichi, caldaia, riscaldamento → IDRAULICO\n" .
-            "- Luce, corrente, interruttore, corto circuito, citofono, cancello elettrico, cancello automatico, cancello motorizzato, motore cancello, videocitofono, quadro elettrico → ELETTRICISTA\n" .
+            "- Luce, luce scale, lampada scale, lampadina rotta, lampadina fulminata, illuminazione scale, luce corridoio, luce garage, luce parcheggio, luce androne, corrente, interruttore, corto circuito, citofono, cancello elettrico, cancello automatico, cancello motorizzato, motore cancello, videocitofono, quadro elettrico, presa elettrica, contatore, impianto elettrico → ELETTRICISTA\n" .
             "- Portone, serratura, cancello bloccato meccanicamente, chiave, lucchetto → FABBRO\n" .
             "- Pareti, crepe, infiltrazioni murarie, intonaco, pavimento → MURATORE/IMPRESA EDILE\n" .
             "- Legno, porta in legno, infissi, scale in legno → FALEGNAME\n\n" .
             "PASSO 2 — Confronta con i fornitori disponibili:\n" .
             $list . "\n\n" .
-            "PASSO 3 — Scegli il fornitore la cui TIPOLOGIA e OPERAZIONI COPERTE corrispondono al tipo di intervento identificato.\n\n" .
+            "PASSO 3 — Scegli il fornitore la cui TIPOLOGIA e OPERAZIONI COPERTE corrispondono al tipo di intervento identificato.\n" .
+            "IMPORTANTE: se NESSUN fornitore è adatto al tipo di intervento richiesto, rispondi con ID: 0.\n\n" .
             "RISPOSTA FINALE: Rispondi con ESATTAMENTE due righe nel formato seguente (nessun altro testo):\n" .
-            "ID: <numero_intero>\n" .
+            "ID: <numero_intero oppure 0 se nessuno è adatto>\n" .
             "MOTIVO: <spiegazione breve in italiano>";
 
         $response = $gemini->query($prompt, 'condominio_classify');
@@ -441,26 +458,17 @@ class Marrison_Assistant_Condominio {
                 $found_motivo = trim($mm[1]);
             }
 
+            // ID: 0 significa nessun fornitore adatto
+            if ($found_id === 0) {
+                $this->mlog('classify_problem: AI risponde ID:0 (nessun fornitore adatto) — ' . $found_motivo);
+                return null;
+            }
+
             if ($found_id !== null) {
                 foreach ($fornitori as $f) {
                     if ((int) $f['id'] === $found_id) {
                         $f['motivo'] = $found_motivo;
                         return $f;
-                    }
-                }
-            }
-
-            // Fallback: cerca qualsiasi numero presente negli ID fornitori
-            $valid_ids = array_column($fornitori, 'id');
-            if (preg_match_all('/(\d+)/', $response, $matches)) {
-                foreach ($matches[1] as $num) {
-                    $num = (int) $num;
-                    if (in_array($num, $valid_ids, false)) {
-                        foreach ($fornitori as $f) {
-                            if ((int) $f['id'] === $num) {
-                                return $f;
-                            }
-                        }
                     }
                 }
             }
@@ -479,22 +487,54 @@ class Marrison_Assistant_Condominio {
      * @param  string $inquilino_email
      * @return array  Risultati wp_mail per chiave 'fornitore','admin','inquilino'.
      */
-    public function send_emails($condominio_id, $fornitore_id, $problema, $inquilino_email) {
+    public function send_emails($condominio_id, $fornitore_id, $problema, $inquilino_email, $attachments = array(), $admin_only = false) {
         $condominio  = get_post($condominio_id);
         $fornitore   = get_post($fornitore_id);
         $indirizzo   = get_post_meta($condominio_id, 'indirizzo_condominio', true);
         $mail_forn   = get_post_meta($fornitore_id, 'mail_fornitore', true);
         $tel_forn    = get_post_meta($fornitore_id, 'tel_fornitore', true);
-        $admin_email = get_option('admin_email');
+        $custom_admin = get_option('marrison_assistant_condominio_admin_email', '');
+        $admin_email = ($custom_admin && is_email($custom_admin)) ? $custom_admin : get_option('admin_email');
         $site_name   = get_bloginfo('name');
         $headers     = array('Content-Type: text/plain; charset=UTF-8');
         $sent        = array();
 
-        $cond_nome = $condominio ? $condominio->post_title : "Condominio #{$condominio_id}";
-        $forn_nome = $fornitore  ? $fornitore->post_title  : "Fornitore #{$fornitore_id}";
+        // Imposta mittente segnalazioni@ per tutte le email del plugin
+        $mail_from_cb      = function() { return 'segnalazioni@' . parse_url(get_site_url(), PHP_URL_HOST); };
+        $mail_from_name_cb = function() use ($site_name) { return $site_name; };
+        add_filter('wp_mail_from',      $mail_from_cb);
+        add_filter('wp_mail_from_name', $mail_from_name_cb);
 
-        // ── Email al fornitore ───────────────────────────────────────────────
-        if ($mail_forn) {
+        // Valida allegati: solo file esistenti in marrison-temp
+        $upload_dir  = wp_upload_dir();
+        $temp_dir    = $upload_dir['basedir'] . '/marrison-temp/';
+        $valid_att   = array();
+        foreach ($attachments as $att) {
+            $att = $temp_dir . basename($att);
+            if (file_exists($att) && strpos(realpath($att), realpath($temp_dir)) === 0) {
+                $valid_att[] = $att;
+            }
+        }
+        $attachments = $valid_att;
+
+        $cond_nome       = $indirizzo ? 'Condominio di ' . $indirizzo : ($condominio ? $condominio->post_title : "Condominio #{$condominio_id}");
+        $cond_nome_admin = ($condominio ? $condominio->post_title : "Condominio #{$condominio_id}") . ($indirizzo ? ' — ' . $indirizzo : '');
+        $forn_nome       = $fornitore ? $fornitore->post_title : "Fornitore #{$fornitore_id}";
+
+        // ── Salva segnalazione nel DB e genera token ─────────────────────
+        $req = Marrison_Assistant_Requests::insert([
+            'condominio_id'   => $condominio_id,
+            'condominio_name' => $cond_nome,
+            'fornitore_id'    => $fornitore_id,
+            'fornitore_name'  => $admin_only ? '' : $forn_nome,
+            'problema'        => $problema,
+            'inquilino_email' => $inquilino_email,
+            'admin_only'      => $admin_only,
+        ]);
+        $confirm_url = Marrison_Assistant_Requests::confirm_url($req['token']);
+
+        // ── Email al fornitore (skip in admin_only mode) ──────────────────
+        if (!$admin_only && $mail_forn) {
             $subj  = "[{$site_name}] Nuova segnalazione — {$cond_nome}";
             $body  = "Gentile {$forn_nome},\n\n";
             $body .= "è pervenuta una segnalazione da un condòmino.\n\n";
@@ -503,36 +543,68 @@ class Marrison_Assistant_Condominio {
             $body .= "\nProblema segnalato:\n{$problema}\n\n";
             $body .= "Contatto condòmino: {$inquilino_email}\n\n";
             $body .= "Si prega di prendere in carico la richiesta il prima possibile.\n\n";
+            $n_att = count($attachments);
+            if ($n_att > 0) $body .= "Foto allegate: {$n_att}\n\n";
+            $body .= "──────────────────────────────────────\n";
+            $body .= "Una volta completato l'intervento, clicchi il link sottostante per confermarne la conclusione:\n\n";
+            $body .= $confirm_url . "\n";
+            $body .= "──────────────────────────────────────\n\n";
             $body .= "Cordiali saluti,\n{$site_name}";
-            $sent['fornitore'] = wp_mail($mail_forn, $subj, $body, $headers);
+            $sent['fornitore'] = wp_mail($mail_forn, $subj, $body, $headers, $attachments);
         } else {
             $sent['fornitore'] = false;
         }
 
         // ── Email all'amministratore ─────────────────────────────────────────
-        $subj_a  = "[{$site_name}] Segnalazione inoltrata — {$cond_nome}";
-        $body_a  = "Una segnalazione è stata inoltrata automaticamente al fornitore.\n\n";
-        $body_a .= "Condominio:  {$cond_nome}\n";
-        if ($indirizzo) $body_a .= "Indirizzo:   {$indirizzo}\n";
+        if ($admin_only) {
+            $subj_a  = "[{$site_name}] Segnalazione diretta — {$cond_nome_admin}";
+            $body_a  = "Un condòmino ha inviato una segnalazione direttamente all'amministratore.\n\n";
+        } else {
+            $subj_a  = "[{$site_name}] Segnalazione inoltrata — {$cond_nome_admin}";
+            $body_a  = "Una segnalazione è stata inoltrata automaticamente al fornitore.\n\n";
+        }
+        $body_a .= "Condominio:  {$cond_nome_admin}\n";
         $body_a .= "Problema:    {$problema}\n";
-        $body_a .= "Fornitore:   {$forn_nome}";
-        if ($mail_forn) $body_a .= " <{$mail_forn}>";
-        if ($tel_forn)  $body_a .= " — Tel: {$tel_forn}";
-        $body_a .= "\nCondòmino:   {$inquilino_email}\n\n";
+        if (!$admin_only) {
+            $body_a .= "Fornitore:   {$forn_nome}";
+            if ($mail_forn) $body_a .= " <{$mail_forn}>";
+            if ($tel_forn)  $body_a .= " — Tel: {$tel_forn}";
+            $body_a .= "\n";
+        }
+        $body_a .= "Condòmino:   {$inquilino_email}\n\n";
         $body_a .= "Cordiali saluti,\n{$site_name}";
-        $sent['admin'] = wp_mail($admin_email, $subj_a, $body_a, $headers);
+        $n_att = count($attachments);
+        if ($n_att > 0) $body_a .= "\nFoto allegate: {$n_att}\n";
+        $sent['admin'] = wp_mail($admin_email, $subj_a, $body_a, $headers, $attachments);
 
         // ── Email al condòmino ───────────────────────────────────────────────
         $subj_i  = "Conferma segnalazione — {$cond_nome}";
-        $body_i  = "La sua segnalazione è stata registrata e inoltrata al fornitore competente.\n\n";
-        $body_i .= "Condominio:  {$cond_nome}\n";
-        if ($indirizzo) $body_i .= "Indirizzo:   {$indirizzo}\n";
-        $body_i .= "Problema:    {$problema}\n";
-        $body_i .= "Fornitore:   {$forn_nome}\n";
-        if ($tel_forn) $body_i .= "Tel:         {$tel_forn}\n";
-        $body_i .= "\nSarà contattato al più presto.\n\n";
+        if ($admin_only) {
+            $body_i  = "La sua segnalazione è stata registrata e trasmessa all'amministratore di condominio.\n\n";
+            $body_i .= "Condominio:  {$cond_nome}\n";
+            if ($indirizzo) $body_i .= "Indirizzo:   {$indirizzo}\n";
+            $body_i .= "Problema:    {$problema}\n";
+            $body_i .= "\nL'amministratore la contatterà al più presto.\n\n";
+        } else {
+            $body_i  = "La sua segnalazione è stata registrata e inoltrata al fornitore competente.\n\n";
+            $body_i .= "Condominio:  {$cond_nome}\n";
+            if ($indirizzo) $body_i .= "Indirizzo:   {$indirizzo}\n";
+            $body_i .= "Problema:    {$problema}\n";
+            $body_i .= "Fornitore:   {$forn_nome}\n";
+            if ($tel_forn) $body_i .= "Tel:         {$tel_forn}\n";
+            $body_i .= "\nSarà contattato al più presto.\n\n";
+        }
         $body_i .= "Cordiali saluti,\n{$site_name}";
         $sent['inquilino'] = wp_mail($inquilino_email, $subj_i, $body_i, $headers);
+
+        // Rimuovi filtri mittente dopo l'invio
+        remove_filter('wp_mail_from',      $mail_from_cb);
+        remove_filter('wp_mail_from_name', $mail_from_name_cb);
+
+        // ── Pulizia file temporanei ──────────────────────────────────────────
+        foreach ($attachments as $path) {
+            @unlink($path);
+        }
 
         return $sent;
     }

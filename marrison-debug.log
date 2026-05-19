@@ -1,3 +1,9 @@
-[2026-05-18 09:10:08] relazione — parent=posts::condominio child=posts::fornitore
-[2026-05-18 09:10:08] tabella wp_jet_rel_items non trovata
-[2026-05-18 09:10:08] get_fornitori(1112) IDs trovati: nessuno
+[2026-05-18 16:29:35] relazione — parent=posts::condominio (condominio) child=posts::fornitore (fornitore)
+[2026-05-18 16:29:35] chiamo get_related_posts rel_id=3 from=parent post_id=17
+[2026-05-18 16:29:35] get_related_posts result=
+[2026-05-18 16:29:35] uso tabella ma_jet_rel_default
+[2026-05-18 16:29:35] colonne ma_jet_rel_default: _ID, created, rel_id, parent_rel, parent_object_id, child_object_id
+[2026-05-18 16:29:35] DB query per condominio_id=17 restituisce 1 righe
+[2026-05-18 16:29:35] IDs relazionati (pre-filtro): 8
+[2026-05-18 16:29:35] IDs fornitore dopo filtro: 8
+[2026-05-18 16:29:35] get_fornitori(17) IDs trovati: 8

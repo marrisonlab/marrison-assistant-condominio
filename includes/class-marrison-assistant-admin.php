@@ -8,13 +8,16 @@ if (!defined('ABSPATH')) {
 }
 
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-main-page.php';
+require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-dashboard.php';
 
 class Marrison_Assistant_Admin {
     
     private $main_page;
+    private $dashboard;
     
     public function __construct() {
         $this->main_page = new Marrison_Assistant_Main_Page();
+        $this->dashboard = new Marrison_Assistant_Dashboard();
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
@@ -24,7 +27,7 @@ class Marrison_Assistant_Admin {
      * Aggiunge la pagina menu del plugin
      */
     public function add_admin_menu() {
-        $menu_label = Marrison_Assistant_White_Label::plugin_name();
+        $menu_label = 'MA Condominio';
         add_menu_page(
             $menu_label,
             $menu_label,
@@ -44,7 +47,8 @@ class Marrison_Assistant_Admin {
             'marrison-assistant',
             array($this, 'main_page')
         );
-        
+
+        $this->dashboard->add_menu();
     }
     
     /**
@@ -74,6 +78,8 @@ class Marrison_Assistant_Admin {
         register_setting('marrison_assistant_settings', 'marrison_assistant_site_agent_icon_color');
         register_setting('marrison_assistant_settings', 'marrison_assistant_site_agent_header_color');
         register_setting('marrison_assistant_settings', 'marrison_assistant_site_agent_button_color');
+        register_setting('marrison_assistant_settings', 'marrison_assistant_condominio_admin_email');
+        register_setting('marrison_assistant_settings', 'marrison_assistant_site_agent_avatar');
     }
     
     /**
@@ -82,6 +88,7 @@ class Marrison_Assistant_Admin {
     public function enqueue_admin_scripts($hook) {
         // Carica nelle pagine del plugin
         if (strpos($hook, 'marrison-assistant') !== false) {
+            wp_enqueue_media();
             wp_enqueue_script(
                 'marrison-admin',
                 plugins_url('assets/js/admin.js', MARRISON_ASSISTANT_PLUGIN_DIR . 'marrison-assistant.php'),

@@ -140,18 +140,13 @@ class Marrison_Assistant_Main_Page {
         .ma-cat-item label { font-size:12px; font-weight:600; color:#50575e; display:block; margin-bottom:4px; }
         .ma-cat-item input { width:100%; box-sizing:border-box; }
 
-        /* ── Scan bar ── */
-        .ma-scan-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-        .ma-scan-meta { font-size:12px; color:#50575e; line-height:1.7; }
-        .ma-scan-meta strong { color:#1d2327; }
-
         /* ── Save ── */
         .ma-save { padding:16px 0 4px; }
         </style>
 
         <!-- Top bar -->
         <div id="ma-topbar">
-            <h1><?php echo esc_html(Marrison_Assistant_White_Label::plugin_name()); ?></h1>
+            <h1>MA Condominio</h1>
             <div id="ma-status-group">
                 <span class="ma-pill"><span class="led <?php echo $led_cmd; ?>"></span>Servizio: <?php echo $txt_cmd; ?></span>
                 <span class="ma-pill"><span class="led <?php echo $led_site; ?>"></span>Sito: <?php echo $txt_site; ?></span>
@@ -171,35 +166,8 @@ class Marrison_Assistant_Main_Page {
         </p></div>
         <?php endif; ?>
 
-        <!-- Scansione contenuti — in cima, fuori dal form -->
-        <div class="ma-card ma-section" style="margin-bottom:28px;">
-            <div class="ma-card-title">
-                <span class="dashicons dashicons-search"></span>
-                <strong>Scansione Contenuti Sito</strong>
-            </div>
-            <div class="ma-card-body">
-                <div class="ma-scan-row">
-                    <button type="button" id="scan-content-btn" class="button button-primary">
-                        <span class="dashicons dashicons-update" style="vertical-align:text-bottom;margin-right:4px;"></span>Scansiona ora
-                    </button>
-                    <span id="scan-status"></span>
-                    <div class="ma-scan-meta">
-                        Ultima scansione: <strong><?php echo $last_scan ? date_i18n('d/m/Y H:i', $last_scan) : '—'; ?></strong>
-                        &nbsp;·&nbsp;
-                        Prossima automatica: <strong><?php
-                            $next = wp_next_scheduled('marrison_assistant_auto_scan');
-                            echo $next ? 'tra ' . human_time_diff(time(), $next) : 'N/D';
-                        ?></strong>
-                    </div>
-                </div>
-                <div id="scan-results" style="display:none;margin-top:14px;">
-                    <div id="scan-details"></div>
-                </div>
-            </div>
-        </div>
-
         <form method="post" action="options.php">
-            <?php settings_fields('marrison_assistant_panel'); ?>
+            <?php settings_fields('marrison_assistant_settings'); ?>
 
             <!-- Riga 1: Impostazioni Widget -->
             <div class="ma-row">
@@ -234,6 +202,33 @@ class Marrison_Assistant_Main_Page {
                             <input type="text" id="marrison_assistant_site_agent_name"
                                    name="marrison_assistant_site_agent_name"
                                    value="<?php echo esc_attr(get_option('marrison_assistant_site_agent_name','Marry')); ?>">
+                        </div>
+                        <div class="maf">
+                            <label>Avatar assistente</label>
+                            <?php $avatar_url = get_option('marrison_assistant_site_agent_avatar', ''); ?>
+                            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                <img id="ma-avatar-preview"
+                                     src="<?php echo esc_url($avatar_url); ?>"
+                                     alt=""
+                                     style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;background:#f1f5f9;<?php echo $avatar_url ? '' : 'display:none;'; ?>">
+                                <div style="display:flex;flex-direction:column;gap:6px;">
+                                    <input type="hidden" id="marrison_assistant_site_agent_avatar"
+                                           name="marrison_assistant_site_agent_avatar"
+                                           value="<?php echo esc_attr($avatar_url); ?>">
+                                    <button type="button" id="ma-avatar-upload-btn" class="button">Scegli immagine</button>
+                                    <button type="button" id="ma-avatar-remove-btn" class="button button-link-delete"
+                                            style="<?php echo $avatar_url ? '' : 'display:none;'; ?>">Rimuovi</button>
+                                </div>
+                            </div>
+                            <p class="description" style="margin:4px 0 0;font-size:12px;color:#666;">Foto o logo che appare nell'intestazione della chat. Consigliato: immagine quadrata, min 120×120px.</p>
+                        </div>
+                        <div class="maf">
+                            <label for="marrison_assistant_condominio_admin_email">Email amministratore condominio</label>
+                            <input type="email" id="marrison_assistant_condominio_admin_email"
+                                   name="marrison_assistant_condominio_admin_email"
+                                   placeholder="amministratore@esempio.it"
+                                   value="<?php echo esc_attr(get_option('marrison_assistant_condominio_admin_email','')); ?>">
+                            <p class="description" style="margin:4px 0 0;font-size:12px;color:#666;">Le segnalazioni vengono inoltrate a questo indirizzo. Se vuoto, viene usato l'email admin WordPress.</p>
                         </div>
                     </div>
                 </div>
@@ -311,36 +306,35 @@ add_action('admin_footer', function() {
             $promptTextarea.prop('disabled', !isEnabled).css('opacity', isEnabled ? '1' : '.45');
         });
 
-        $('#scan-content-btn').on('click', function() {
-            var $btn    = $(this);
-            var $status = $('#scan-status');
-            var $res    = $('#scan-results');
-            $btn.prop('disabled', true);
-            $status.html('<span style="color:#f0b429;">⏳ Scansione in corso…</span>');
-            $res.hide();
-            $.ajax({
-                url: ajaxurl, method: 'POST',
-                data: { action: 'marrison_scan_site_content', nonce: '<?php echo wp_create_nonce('marrison_nonce'); ?>' },
-                success: function(r) {
-                    if (r.success) {
-                        $status.html('<span style="color:#00a32a;">✔ Completata</span>');
-                        $('#scan-details').html(r.data);
-                        $res.show();
-                        setTimeout(function(){ location.reload(); }, 2000);
-                    } else {
-                        $status.html('<span style="color:#d63638;">✘ ' + r.data + '</span>');
-                        $btn.prop('disabled', false);
-                    }
-                },
-                error: function(xhr) {
-                    $status.html('<span style="color:#d63638;">✘ Errore di connessione</span>');
-                    $btn.prop('disabled', false);
-                }
+        // ── Avatar media picker ──────────────────────────────────────────
+        var avatarFrame;
+        $('#ma-avatar-upload-btn').on('click', function(e) {
+            e.preventDefault();
+            if (avatarFrame) { avatarFrame.open(); return; }
+            avatarFrame = wp.media({
+                title:    'Scegli avatar assistente',
+                button:   { text: 'Usa questa immagine' },
+                multiple: false,
+                library:  { type: 'image' },
             });
+            avatarFrame.on('select', function() {
+                var att = avatarFrame.state().get('selection').first().toJSON();
+                var url = att.sizes && att.sizes.thumbnail ? att.sizes.thumbnail.url : att.url;
+                $('#marrison_assistant_site_agent_avatar').val(url);
+                $('#ma-avatar-preview').attr('src', url).show();
+                $('#ma-avatar-remove-btn').show();
+            });
+            avatarFrame.open();
+        });
+        $('#ma-avatar-remove-btn').on('click', function(e) {
+            e.preventDefault();
+            $('#marrison_assistant_site_agent_avatar').val('');
+            $('#ma-avatar-preview').attr('src', '').hide();
+            $(this).hide();
         });
     });
     </script>
-    <?php
+<?php
 });
 
 /* end of file */
