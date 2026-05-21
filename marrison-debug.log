@@ -1,9 +1,13 @@
-[2026-05-18 16:29:35] relazione — parent=posts::condominio (condominio) child=posts::fornitore (fornitore)
-[2026-05-18 16:29:35] chiamo get_related_posts rel_id=3 from=parent post_id=17
-[2026-05-18 16:29:35] get_related_posts result=
-[2026-05-18 16:29:35] uso tabella ma_jet_rel_default
-[2026-05-18 16:29:35] colonne ma_jet_rel_default: _ID, created, rel_id, parent_rel, parent_object_id, child_object_id
-[2026-05-18 16:29:35] DB query per condominio_id=17 restituisce 1 righe
-[2026-05-18 16:29:35] IDs relazionati (pre-filtro): 8
-[2026-05-18 16:29:35] IDs fornitore dopo filtro: 8
-[2026-05-18 16:29:35] get_fornitori(17) IDs trovati: 8
+[2026-05-19 16:18:06] relazione — parent=posts::condominio (condominio) child=posts::fornitore (fornitore)
+[2026-05-19 16:18:06] chiamo get_related_posts rel_id=4 from=parent post_id=1112
+[2026-05-19 16:18:06] get_related_posts result=
+[2026-05-19 16:18:06] uso tabella ma_jet_rel_default
+[2026-05-19 16:18:06] colonne wp_jet_rel_default: _ID, created, rel_id, parent_rel, parent_object_id, child_object_id
+[2026-05-19 16:18:06] DB query per condominio_id=1112 restituisce 2 righe
+[2026-05-19 16:18:06] IDs relazionati (pre-filtro): 1109, 1111
+[2026-05-19 16:18:06] IDs fornitore dopo filtro: 1111, 1109
+[2026-05-19 16:18:06] get_fornitori(1112) IDs trovati: 1111, 1109
+[2026-05-19 16:18:06] classify_problem input: "cantina allagata" — lista fornitori: [{"id":1111,"nome":"Angelo","tipologia":"elettricista","operazioni":"manutenzione e sostituzione di lampade e neon nelle parti comuni, riparazione e installazione di impianti citofonici e videocitofonici, automazione e manutenzione di cancelli e barriere, riparazione di cortocircuiti e guasti sulle linee elettriche condominiali, manutenzione dell'impianto di messa a terra, installazione e programmazione di temporizzatori e sensori di movimento per le luci, adeguamento e verifica dei quadri elettrici generali, manutenzione dell'illuminazione d'emergenza, cablaggio e gestione di centraline per antenne comuni, installazione di colonnine di ricarica per veicoli elettrici, sostituzione di interruttori e pulsanti luce delle scale"},{"id":1109,"nome":"Margherita","tipologia":"idraulico","operazioni":"manutenzione di autoclavi, riparazione di perdite d'acqua nelle colonne comuni, disostruzione di scarichi e colonne condominiali, manutenzione di impianti termici centralizzati, sostituzione di contatori dell'acqua divisionali, riparazione di gronde e pluviali, manutenzione di valvole di intercettazione generali, spurgo e riparazione di termosifoni condominiali, sostituzione di chiavi d'arresto, controllo di pompe di sollevamento e sommerse"}]
+[2026-05-19 16:18:16] classify_problem AI raw: false
+[2026-05-19 16:18:54] SMS check — forn_id=1109 tel='3476600889' abilita_sms='true'
+[2026-05-19 16:18:54] SMS HTTP 400: {"errorMsg":"TEST_SMS_NOT_ALLOWED","errorCode":400}

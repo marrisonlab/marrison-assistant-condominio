@@ -180,7 +180,9 @@ class Marrison_Assistant_Requests {
         $custom_admin = get_option('marrison_assistant_condominio_admin_email', '');
         $admin_email  = ($custom_admin && is_email($custom_admin)) ? $custom_admin : get_option('admin_email');
         $data_ora     = date_i18n('d/m/Y \a\l\l\e H:i', current_time('timestamp'));
-        $cb_from      = function() { return 'segnalazioni@' . parse_url(get_site_url(), PHP_URL_HOST); };
+        $mail_host    = parse_url(get_site_url(), PHP_URL_HOST);
+        if (substr($mail_host, 0, 4) === 'www.') $mail_host = substr($mail_host, 4);
+        $cb_from      = function() use ($mail_host) { return 'segnalazioni@' . $mail_host; };
         $cb_name      = function() use ($site) { return $site; };
         add_filter('wp_mail_from',      $cb_from);
         add_filter('wp_mail_from_name', $cb_name);

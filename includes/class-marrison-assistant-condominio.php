@@ -109,6 +109,17 @@ class Marrison_Assistant_Condominio {
                 'label'     => $display,
             );
         }
+
+        // Post-filtro: ogni parola significativa deve apparire nel titolo o nell'indirizzo
+        // Questo elimina falsi positivi causati dal boost della ricerca frase (Strategia A)
+        $results = array_values(array_filter($results, function ($r) use ($words) {
+            $haystack = mb_strtolower($r['nome'] . ' ' . $r['indirizzo']);
+            foreach ($words as $w) {
+                if (mb_strpos($haystack, $w) === false) return false;
+            }
+            return true;
+        }));
+
         return $results;
     }
 
@@ -188,16 +199,81 @@ class Marrison_Assistant_Condominio {
         return $result;
     }
 
+    // ── Cache JSON fornitori ─────────────────────────────────────────────────
+
+    private function cache_dir() {
+        return WP_CONTENT_DIR . '/marrison-cache';
+    }
+
+    private function cache_file($condominio_id) {
+        return $this->cache_dir() . '/fornitori-' . (int) $condominio_id . '.json';
+    }
+
+    /**
+     * Legge la cache JSON per un condominio; restituisce null se assente o corrotta.
+     */
+    private function read_cache($condominio_id) {
+        $file = $this->cache_file($condominio_id);
+        if (!file_exists($file)) return null;
+        $data = json_decode(file_get_contents($file), true);
+        return is_array($data) ? $data : null;
+    }
+
+    /**
+     * Salva l'array fornitori come JSON ottimizzato per un condominio.
+     */
+    private function write_cache($condominio_id, array $fornitori) {
+        $dir = $this->cache_dir();
+        if (!file_exists($dir)) {
+            wp_mkdir_p($dir);
+            // Proteggi la directory da accesso web diretto
+            file_put_contents($dir . '/.htaccess', "Deny from all\n");
+        }
+        file_put_contents(
+            $this->cache_file($condominio_id),
+            json_encode($fornitori, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+        );
+    }
+
+    /**
+     * Elimina il file cache di uno o tutti i condominii.
+     * Chiamato dai hook WordPress su save_post.
+     *
+     * @param  int|null $condominio_id  Se null, elimina tutto il cache.
+     */
+    public static function invalidate_cache($condominio_id = null) {
+        $dir = WP_CONTENT_DIR . '/marrison-cache';
+        if (!file_exists($dir)) return;
+        if ($condominio_id) {
+            $file = $dir . '/fornitori-' . (int) $condominio_id . '.json';
+            if (file_exists($file)) @unlink($file);
+        } else {
+            foreach (glob($dir . '/fornitori-*.json') ?: array() as $f) {
+                @unlink($f);
+            }
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+
     /**
      * Restituisce i fornitori associati al condominio tramite JetEngine Relations.
-     * Se non ci sono relazioni, restituisce tutti i fornitori pubblicati.
+     * Usa il cache JSON se disponibile; altrimenti esegue la query DB e salva la cache.
      *
      * @param  int   $condominio_id
-     * @return array Array di ['id', 'nome', 'mail', 'tel']
+     * @return array Array di ['id', 'nome', 'mail', 'tel', 'tipologia', 'operazioni']
      */
     public function get_fornitori($condominio_id) {
+        // ── Leggi cache ──────────────────────────────────────────────────────
+        $cached = $this->read_cache($condominio_id);
+        if ($cached !== null) {
+            $this->mlog('get_fornitori(' . $condominio_id . ') — cache hit (' . count($cached) . ' fornitori)');
+            return $cached;
+        }
+
+        // ── Query DB ─────────────────────────────────────────────────────────
         $ids = $this->get_fornitori_ids($condominio_id);
-        $this->mlog('get_fornitori(' . $condominio_id . ') IDs trovati: ' . (empty($ids) ? 'nessuno' : implode(', ', $ids)));
+        $this->mlog('get_fornitori(' . $condominio_id . ') — cache miss, IDs: ' . (empty($ids) ? 'nessuno' : implode(', ', $ids)));
 
         if (empty($ids)) {
             return array();
@@ -222,6 +298,10 @@ class Marrison_Assistant_Condominio {
                 'operazioni' => (string)(get_post_meta($p->ID, 'operazioni_fornitore', true) ?: ''),
             );
         }
+
+        // ── Salva cache ──────────────────────────────────────────────────────
+        $this->write_cache($condominio_id, $result);
+
         return $result;
     }
 
@@ -274,7 +354,14 @@ class Marrison_Assistant_Condominio {
             }
         }
 
-        return (string) $value;
+        // Supporta valori multipli separati da | (es. "Elettricista|Fabbro|Manutenzione cancello")
+        $str = (string) $value;
+        if (strpos($str, '|') !== false) {
+            $parts = array_map('trim', explode('|', $str));
+            $parts = array_filter($parts);
+            return implode(', ', $parts);
+        }
+        return $str;
     }
 
     /**
@@ -408,7 +495,7 @@ class Marrison_Assistant_Condominio {
      * @param  array  $fornitori   Array di ['id','nome','mail','tel'].
      * @return array|null          Fornitore scelto o null.
      */
-    public function classify_problem($problema, $fornitori) {
+    public function classify_problem($problema, $fornitori, $no_question = false) {
         if (empty($fornitori)) {
             return null;
         }
@@ -419,47 +506,70 @@ class Marrison_Assistant_Condominio {
             $s .= 'ID: '    . $f['id']   . "\n";
             $s .= 'Nome: '  . $f['nome'] . "\n";
             if (!empty($f['tipologia']))  $s .= 'Tipologia: ' . $f['tipologia']  . "\n";
-            if (!empty($f['operazioni'])) $s .= 'Operazioni coperte: ' . $f['operazioni'] . "\n";
+            if (!empty($f['operazioni'])) {
+                $op = mb_substr($f['operazioni'], 0, 200);
+                if (mb_strlen($f['operazioni']) > 200) $op .= '...';
+                $s .= 'Operazioni: ' . $op . "\n";
+            }
             return $s;
         }, $fornitori);
 
         $list = implode("\n", $sections) . '---';
 
         $prompt =
-            "Sei un esperto di gestione condominiale. Devi identificare il fornitore corretto per un problema segnalato.\n\n" .
-            "PROBLEMA SEGNALATO: \"" . $problema . "\"\n\n" .
-            "PASSO 1 — Classifica il problema:\n" .
-            "Leggi il problema e determina che tipo di intervento richiede. Esempi:\n" .
-            "- Acqua, allagamento, perdita, umidità, tubature, scarichi, caldaia, riscaldamento → IDRAULICO\n" .
-            "- Luce, luce scale, lampada scale, lampadina rotta, lampadina fulminata, illuminazione scale, luce corridoio, luce garage, luce parcheggio, luce androne, corrente, interruttore, corto circuito, citofono, cancello elettrico, cancello automatico, cancello motorizzato, motore cancello, videocitofono, quadro elettrico, presa elettrica, contatore, impianto elettrico → ELETTRICISTA\n" .
-            "- Portone, serratura, cancello bloccato meccanicamente, chiave, lucchetto → FABBRO\n" .
-            "- Pareti, crepe, infiltrazioni murarie, intonaco, pavimento → MURATORE/IMPRESA EDILE\n" .
-            "- Legno, porta in legno, infissi, scale in legno → FALEGNAME\n\n" .
-            "PASSO 2 — Confronta con i fornitori disponibili:\n" .
+            "Sei un assistente per la gestione condominiale. Identifica il fornitore più adatto al problema segnalato.\n\n" .
+            "PROBLEMA: \"" . $problema . "\"\n\n" .
+            "FORNITORI DISPONIBILI:\n" .
             $list . "\n\n" .
-            "PASSO 3 — Scegli il fornitore la cui TIPOLOGIA e OPERAZIONI COPERTE corrispondono al tipo di intervento identificato.\n" .
-            "IMPORTANTE: se NESSUN fornitore è adatto al tipo di intervento richiesto, rispondi con ID: 0.\n\n" .
-            "RISPOSTA FINALE: Rispondi con ESATTAMENTE due righe nel formato seguente (nessun altro testo):\n" .
-            "ID: <numero_intero oppure 0 se nessuno è adatto>\n" .
-            "MOTIVO: <spiegazione breve in italiano>";
+            "REGOLE:\n" .
+            "- Scegli il fornitore la cui Tipologia o Operazioni copre il problema.\n" .
+            "- I titoli professionali coprono il loro settore: 'Ascensorista' → ascensori, 'Elettricista' → impianti elettrici, 'Idraulico' → impianti idrici, 'Fabbro' → serrature e cancelli meccanici, ecc.\n" .
+            "- NON scegliere un fornitore con Tipologia incompatibile.\n" .
+            "- Se il problema è troppo generico per capire il tipo di intervento, aggiungi la riga DOMANDA con una domanda di chiarimento.\n\n" .
+            "RISPOSTA (solo queste righe, nessun altro testo):\n" .
+            "ID: <numero del fornitore adatto, oppure 0 se nessuno è compatibile>\n" .
+            "RUOLO: <copia ESATTAMENTE uno dei valori dalla Tipologia del fornitore scelto — ometti se ID è 0>\n" .
+            "MOTIVO: <spiegazione breve in italiano>\n" .
+            "DOMANDA: <domanda breve — aggiungi solo se ID è 0 e il problema è troppo vago>";
 
+        $this->mlog('classify_problem input: "' . $problema . '" — lista fornitori: ' . json_encode(array_map(fn($f) => ['id'=>$f['id'],'nome'=>$f['nome'],'tipologia'=>$f['tipologia']??'','operazioni'=>$f['operazioni']??''], $fornitori)));
         $response = $gemini->query($prompt, 'condominio_classify');
+        if ($response === false) {
+            $this->mlog('classify_problem: Commander fallito, retry tra 2s...');
+            sleep(2);
+            $response = $gemini->query($prompt, 'condominio_classify');
+        }
+        $this->mlog('classify_problem AI raw: ' . json_encode($response));
 
         if ($response) {
-            $found_id     = null;
-            $found_motivo = '';
+            $found_id       = null;
+            $found_motivo   = '';
+            $found_ruolo    = '';
+            $found_domanda  = '';
 
             // Estrai ID: cerca un numero dopo "ID:" (case-insensitive, anche con spazi)
             if (preg_match('/\bID\s*:\s*(\d+)/i', $response, $m)) {
                 $found_id = (int) $m[1];
+            }
+            // Estrai RUOLO: ruolo specifico matchato
+            if (preg_match('/\bRUOLO\s*:\s*(.+)/i', $response, $mr)) {
+                $found_ruolo = trim($mr[1]);
+            }
+            // Estrai DOMANDA: domanda di chiarimento
+            if (preg_match('/\bDOMANDA\s*:\s*(.+)/i', $response, $mq)) {
+                $found_domanda = trim($mq[1]);
             }
             // Estrai MOTIVO: tutto ciò che segue "MOTIVO:"
             if (preg_match('/\bMOTIVO\s*:\s*(.+)/i', $response, $mm)) {
                 $found_motivo = trim($mm[1]);
             }
 
-            // ID: 0 significa nessun fornitore adatto
+            // ID: 0 — controlla se l'AI vuole fare una domanda di chiarimento
             if ($found_id === 0) {
+                if (!empty($found_domanda) && !$no_question) {
+                    $this->mlog('classify_problem: AI chiede chiarimento — ' . $found_domanda);
+                    return array('question' => $found_domanda);
+                }
                 $this->mlog('classify_problem: AI risponde ID:0 (nessun fornitore adatto) — ' . $found_motivo);
                 return null;
             }
@@ -467,7 +577,20 @@ class Marrison_Assistant_Condominio {
             if ($found_id !== null) {
                 foreach ($fornitori as $f) {
                     if ((int) $f['id'] === $found_id) {
-                        $f['motivo'] = $found_motivo;
+                        // Validazione PHP: RUOLO deve essere compatibile con la Tipologia del fornitore
+                        if (!empty($found_ruolo) && !empty($f['tipologia'])) {
+                            $tip_lower   = mb_strtolower($f['tipologia']);
+                            $ruolo_lower = mb_strtolower($found_ruolo);
+                            $tip_parts   = array_map('trim', explode(',', $tip_lower));
+                            $exact_match = in_array($ruolo_lower, $tip_parts);
+                            $substr_match = strpos($tip_lower, $ruolo_lower) !== false;
+                            if (!$exact_match && !$substr_match) {
+                                $this->mlog('classify_problem: RUOLO AI "' . $found_ruolo . '" incompatibile con tipologia "' . $f['tipologia'] . '" — fornitore scartato, selezione manuale');
+                                return null;
+                            }
+                        }
+                        $f['motivo']       = $found_motivo;
+                        $f['matched_role'] = $found_ruolo;
                         return $f;
                     }
                 }
@@ -500,7 +623,9 @@ class Marrison_Assistant_Condominio {
         $sent        = array();
 
         // Imposta mittente segnalazioni@ per tutte le email del plugin
-        $mail_from_cb      = function() { return 'segnalazioni@' . parse_url(get_site_url(), PHP_URL_HOST); };
+        $mail_host = parse_url(get_site_url(), PHP_URL_HOST);
+        if (substr($mail_host, 0, 4) === 'www.') $mail_host = substr($mail_host, 4);
+        $mail_from_cb      = function() use ($mail_host) { return 'segnalazioni@' . $mail_host; };
         $mail_from_name_cb = function() use ($site_name) { return $site_name; };
         add_filter('wp_mail_from',      $mail_from_cb);
         add_filter('wp_mail_from_name', $mail_from_name_cb);
@@ -551,6 +676,16 @@ class Marrison_Assistant_Condominio {
             $body .= "──────────────────────────────────────\n\n";
             $body .= "Cordiali saluti,\n{$site_name}";
             $sent['fornitore'] = wp_mail($mail_forn, $subj, $body, $headers, $attachments);
+            if (!$sent['fornitore']) $this->mlog('mail FORNITORE fallita: to=' . $mail_forn);
+
+            // SMS al fornitore (solo se abilita_sms è attivo nel CPT)
+            $sms_flag = get_post_meta($fornitore_id, 'abilita_sms', true);
+            $this->mlog('SMS check — forn_id=' . $fornitore_id . ' tel=' . var_export($tel_forn, true) . ' abilita_sms=' . var_export($sms_flag, true));
+            if ($tel_forn && $sms_flag && $sms_flag !== 'false') {
+                $sms_addr = $indirizzo ?: ($condominio ? $condominio->post_title : '');
+                $sms_text = mb_substr('Richiesta intervento: ' . $sms_addr, 0, 130);
+                $this->send_sms($tel_forn, $sms_text);
+            }
         } else {
             $sent['fornitore'] = false;
         }
@@ -576,6 +711,7 @@ class Marrison_Assistant_Condominio {
         $n_att = count($attachments);
         if ($n_att > 0) $body_a .= "\nFoto allegate: {$n_att}\n";
         $sent['admin'] = wp_mail($admin_email, $subj_a, $body_a, $headers, $attachments);
+        if (!$sent['admin']) $this->mlog('mail ADMIN fallita: to=' . $admin_email);
 
         // ── Email al condòmino ───────────────────────────────────────────────
         $subj_i  = "Conferma segnalazione — {$cond_nome}";
@@ -596,6 +732,7 @@ class Marrison_Assistant_Condominio {
         }
         $body_i .= "Cordiali saluti,\n{$site_name}";
         $sent['inquilino'] = wp_mail($inquilino_email, $subj_i, $body_i, $headers);
+        if (!$sent['inquilino']) $this->mlog('mail INQUILINO fallita: to=' . $inquilino_email);
 
         // Rimuovi filtri mittente dopo l'invio
         remove_filter('wp_mail_from',      $mail_from_cb);
@@ -607,5 +744,94 @@ class Marrison_Assistant_Condominio {
         }
 
         return $sent;
+    }
+
+    /**
+     * Invia un SMS tramite Aruba SMS API.
+     *
+     * @param string $phone   Numero destinatario (qualsiasi formato italiano).
+     * @param string $message Testo SMS (max 160 caratteri).
+     */
+    private function send_sms($phone, $message) {
+        $email    = get_option('marrison_aruba_email', '');
+        $password = get_option('marrison_aruba_password', '');
+        $sender   = get_option('marrison_aruba_sender', '');
+
+        if (!$email || !$password) {
+            $this->mlog('SMS: credenziali Aruba non configurate.');
+            return false;
+        }
+
+        // Normalizza numero: rimuove spazi, trattini, punti, parentesi
+        $phone = preg_replace('/[\s\-\.\(\)\/]+/', '', $phone);
+        if (preg_match('/^\+/', $phone)) {
+            // già in formato internazionale (+39...) → nessuna modifica
+        } elseif (preg_match('/^00/', $phone)) {
+            $phone = '+' . substr($phone, 2);       // 0039... → +39...
+        } elseif (preg_match('/^39[0-9]/', $phone)) {
+            $phone = '+' . $phone;                  // 393xx... → +393xx...
+        } elseif (preg_match('/^[03]/', $phone)) {
+            $phone = '+39' . $phone;                // 3xx... o 0... → +393xx...
+        }
+        if (!$phone) return false;
+
+        // ── Step 1: ottieni access token (cache 10 min) ──────────────────────
+        $cached = get_transient('marrison_aruba_token');
+        if ($cached && strpos($cached, ';') !== false) {
+            [$user_key, $access_token] = explode(';', $cached, 2);
+        } else {
+            $tok = wp_remote_get('https://smspanel.aruba.it/API/v1.0/REST/token', [
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode($email . ':' . $password),
+                    'Content-Type'  => 'application/json',
+                ],
+                'timeout' => 15,
+            ]);
+            if (is_wp_error($tok)) {
+                $this->mlog('SMS Aruba token error: ' . $tok->get_error_message());
+                return false;
+            }
+            $tok_code = wp_remote_retrieve_response_code($tok);
+            $tok_body = wp_remote_retrieve_body($tok);
+            if ($tok_code !== 200 || strpos($tok_body, ';') === false) {
+                $this->mlog('SMS Aruba token HTTP ' . $tok_code . ': ' . $tok_body);
+                return false;
+            }
+            set_transient('marrison_aruba_token', $tok_body, 10 * MINUTE_IN_SECONDS);
+            [$user_key, $access_token] = explode(';', $tok_body, 2);
+        }
+
+        // ── Step 2: invia SMS ────────────────────────────────────────────────
+        $sms_body = [
+            'message_type' => 'GP',
+            'message'      => mb_substr($message, 0, 160),
+            'recipient'    => [$phone],
+        ];
+        if ($sender) $sms_body['sender'] = mb_substr($sender, 0, 11);
+
+        $response = wp_remote_post('https://smspanel.aruba.it/API/v1.0/REST/sms', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'user_key'     => trim($user_key),
+                'Access_token' => trim($access_token),
+            ],
+            'body'    => json_encode($sms_body),
+            'timeout' => 15,
+        ]);
+
+        if (is_wp_error($response)) {
+            $this->mlog('SMS Aruba send error: ' . $response->get_error_message());
+            return false;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        if ($code !== 201) {
+            $this->mlog('SMS Aruba HTTP ' . $code . ': ' . wp_remote_retrieve_body($response));
+            if ($code === 401) delete_transient('marrison_aruba_token');
+            return false;
+        }
+
+        $this->mlog('SMS Aruba inviato OK a ' . $phone);
+        return true;
     }
 }

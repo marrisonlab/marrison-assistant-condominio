@@ -84,9 +84,13 @@ class Marrison_Assistant_Site_Agent {
                         ),
                     ));
                 } else {
+                    $options = array_map(function ($r) {
+                        return array('value' => 'select_' . $r['id'], 'label' => $r['label']);
+                    }, $results);
                     wp_send_json_success(array(
-                        'message'   => 'Ho trovato più condomini con questo nome. Puoi essere più specifico? Inserisci l\'indirizzo completo o aggiungi dettagli come il numero civico o la città.',
-                        'next_step' => 'find_condominio',
+                        'message'   => 'Ho trovato ' . count($results) . ' condomini. Seleziona il tuo:',
+                        'next_step' => 'select_condominio',
+                        'options'   => $options,
                     ));
                 }
                 break;
@@ -145,7 +149,7 @@ class Marrison_Assistant_Site_Agent {
                 $fornitori = $condo->get_fornitori($cid);
                 if (empty($fornitori)) {
                     wp_send_json_success(array(
-                        'message'       => 'Non ho trovato fornitori associati a questo condominio.<br>Posso comunque inoltrarla all&#8217;amministratore. Vuoi allegare delle foto?',
+                        'message'       => 'Non ho trovato fornitori associati a questo condominio.<br>Posso comunque inoltrarla all\'amministratore. Vuoi allegare delle foto?',
                         'next_step'     => 'upload_photos',
                         'photo_upload'  => true,
                         'admin_only'    => true,
@@ -154,7 +158,22 @@ class Marrison_Assistant_Site_Agent {
                     ));
                     break;
                 }
-                $fornitore = $condo->classify_problem($input, $fornitori);
+                // Se c'è un solo fornitore, saltare l'AI e usarlo direttamente
+                if (count($fornitori) === 1) {
+                    $fornitore = $fornitori[0];
+                } else {
+                    $fornitore = $condo->classify_problem($input, $fornitori);
+                }
+                // AI chiede un chiarimento prima di decidere
+                if (is_array($fornitore) && isset($fornitore['question'])) {
+                    wp_send_json_success(array(
+                        'message'      => $fornitore['question'],
+                        'next_step'    => 'clarify_problem',
+                        'problema'     => $input,
+                        'condominio_id' => $cid,
+                    ));
+                    break;
+                }
                 if (!$fornitore) {
                     $options = array_map(function ($f) {
                         $lbl = $f['nome'];
@@ -176,13 +195,58 @@ class Marrison_Assistant_Site_Agent {
                 $msg = $ai_used
                     ? 'Ho analizzato il problema e identificato il fornitore più adatto: <strong>' . esc_html($fornitore['nome']) . '</strong>'
                     : 'Il fornitore associato a questo condominio è: <strong>' . esc_html($fornitore['nome']) . '</strong>';
-                if (!empty($fornitore['tipologia'])) $msg .= ' (' . esc_html($fornitore['tipologia']) . ')';
+                $role_label = !empty($fornitore['matched_role']) ? $fornitore['matched_role'] : ($fornitore['tipologia'] ?? '');
+                if ($role_label) $msg .= ' (' . esc_html($role_label) . ')';
                 $msg .= '<br><br>Vuoi procedere con la segnalazione?';
                 wp_send_json_success(array(
                     'message'      => $msg,
                     'next_step'    => 'confirm_fornitore',
                     'fornitore_id' => $fornitore['id'],
                     'problema'     => $input,
+                    'condominio_id' => $cid,
+                    'options'      => array(
+                        array('value' => 'confirm',    'label' => '✅ Sì, procedi con il fornitore'),
+                        array('value' => 'admin_only', 'label' => '📋 Invia solo all\'amministratore'),
+                        array('value' => 'reject',     'label' => '🔄 Fornitore sbagliato'),
+                        array('value' => 'cancel',     'label' => '❌ Annulla segnalazione'),
+                    ),
+                ));
+                break;
+
+            // ── Passo 2c: chiarimento richiesto dall'AI ──────────────────────────
+            case 'clarify_problem':
+                $cid          = (int) ($context['condominioId'] ?? 0);
+                $prob_orig    = sanitize_textarea_field($context['problema'] ?? '');
+                $prob_combined = $prob_orig . ' (chiarimento: ' . $input . ')';
+                $fornitori    = $condo->get_fornitori($cid);
+                // Secondo tentativo: nessuna ulteriore domanda consentita
+                $fornitore = $condo->classify_problem($prob_combined, $fornitori, true);
+                if (!$fornitore || (is_array($fornitore) && isset($fornitore['question']))) {
+                    $options = array_map(function ($f) {
+                        $lbl = $f['nome'];
+                        if (!empty($f['tipologia'])) $lbl .= ' (' . $f['tipologia'] . ')';
+                        return array('value' => 'select_forn_' . $f['id'], 'label' => $lbl);
+                    }, $fornitori);
+                    $options[] = array('value' => 'admin_only', 'label' => '📋 Invia solo all\'amministratore');
+                    $options[] = array('value' => 'cancel',     'label' => '❌ Annulla segnalazione');
+                    wp_send_json_success(array(
+                        'message'      => 'Non riesco ancora a identificare il fornitore adatto. Scegli tu dalla lista:',
+                        'next_step'    => 'manual_select_fornitore',
+                        'options'      => $options,
+                        'condominio_id' => $cid,
+                        'problema'     => $prob_combined,
+                    ));
+                    break;
+                }
+                $msg = 'Ho analizzato il problema e identificato il fornitore più adatto: <strong>' . esc_html($fornitore['nome']) . '</strong>';
+                $role_label = !empty($fornitore['matched_role']) ? $fornitore['matched_role'] : ($fornitore['tipologia'] ?? '');
+                if ($role_label) $msg .= ' (' . esc_html($role_label) . ')';
+                $msg .= '<br><br>Vuoi procedere con la segnalazione?';
+                wp_send_json_success(array(
+                    'message'      => $msg,
+                    'next_step'    => 'confirm_fornitore',
+                    'fornitore_id' => $fornitore['id'],
+                    'problema'     => $prob_combined,
                     'condominio_id' => $cid,
                     'options'      => array(
                         array('value' => 'confirm',    'label' => '✅ Sì, procedi con il fornitore'),
@@ -201,7 +265,7 @@ class Marrison_Assistant_Site_Agent {
 
                 if ($input === 'admin_only') {
                     wp_send_json_success(array(
-                        'message'       => 'Perfetto! La segnalazione verrà inoltrata all&#8217;amministratore. Vuoi allegare delle foto?',
+                        'message'       => 'Perfetto! La segnalazione verrà inoltrata all\'amministratore. Vuoi allegare delle foto?',
                         'next_step'     => 'upload_photos',
                         'photo_upload'  => true,
                         'admin_only'    => true,
@@ -259,7 +323,7 @@ class Marrison_Assistant_Site_Agent {
                     $cid_ao  = (int) ($context['condominioId'] ?? 0);
                     $prob_ao = sanitize_textarea_field($context['problema'] ?? '');
                     wp_send_json_success(array(
-                        'message'       => 'Perfetto! La segnalazione verrà inoltrata all&#8217;amministratore. Vuoi allegare delle foto?',
+                        'message'       => 'Perfetto! La segnalazione verrà inoltrata all\'amministratore. Vuoi allegare delle foto?',
                         'next_step'     => 'upload_photos',
                         'photo_upload'  => true,
                         'admin_only'    => true,
@@ -366,20 +430,54 @@ class Marrison_Assistant_Site_Agent {
                 if ($success_cnt > 0) {
                     $msg  = '✅ <strong>Segnalazione inviata!</strong><br>';
                     if ($admin_only) {
-                        $msg .= 'La segnalazione è stata inoltrata all&#8217;<strong>amministratore</strong>.<br>';
+                        $msg .= 'La segnalazione è stata inoltrata all\'<strong>amministratore</strong>.<br>';
                     } else {
                         $msg .= 'Il fornitore <strong>' . esc_html($forn_nome) . '</strong> è stato contattato.<br>';
                     }
                     $msg .= 'Riceverai una conferma a <strong>' . esc_html($email) . '</strong>.<br><br>';
-                    $msg .= 'Hai un\'altra segnalazione? Dimmi pure il condominio.';
+                    $msg .= 'Vuoi effettuare un\'altra segnalazione?';
                     wp_send_json_success(array(
                         'message'   => $msg,
+                        'next_step' => 'post_send',
+                        'options'   => array(
+                            array('value' => 'same_condo_' . $cid, 'label' => '🔄 Altra segnalazione'),
+                            array('value' => 'change_condo',        'label' => '🏢 Cambia condominio'),
+                            array('value' => 'no_grazie',           'label' => '👋 No, grazie'),
+                        ),
+                    ));
+                } else {
+                    wp_send_json_success(array(
+                        'message'   => 'Si è verificato un errore nell\'invio delle email. Contatta direttamente l\'amministratore.',
+                        'next_step' => 'find_condominio',
+                        'reset'     => true,
+                    ));
+                }
+                break;
+
+            // ── Post-invio: stessa segnalazione o cambio condominio ──────────
+            case 'post_send':
+                if (preg_match('/^same_condo_(\d+)$/', $input, $m)) {
+                    $cid = (int) $m[1];
+                    wp_send_json_success(array(
+                        'message'       => 'Descrivi il nuovo problema che hai riscontrato.',
+                        'next_step'     => 'describe_problem',
+                        'condominio_id' => $cid,
+                    ));
+                } elseif ($input === 'change_condo') {
+                    wp_send_json_success(array(
+                        'message'   => 'Inserisci il nome o l\'indirizzo del tuo condominio.',
+                        'next_step' => 'find_condominio',
+                        'reset'     => true,
+                    ));
+                } elseif ($input === 'no_grazie' || preg_match('/\b(no|grazie|niente|basta|fine|ok grazie|no grazie)\b/i', $input)) {
+                    wp_send_json_success(array(
+                        'message'   => 'Prego! Se hai bisogno di ulteriore assistenza, sono qui. Buona giornata! 👋',
                         'next_step' => 'find_condominio',
                         'reset'     => true,
                     ));
                 } else {
                     wp_send_json_success(array(
-                        'message'   => 'Si è verificato un errore nell\'invio delle email. Contatta direttamente l\'amministratore.',
+                        'message'   => 'Inserisci il nome o l\'indirizzo del tuo condominio.',
                         'next_step' => 'find_condominio',
                         'reset'     => true,
                     ));
@@ -853,10 +951,10 @@ class Marrison_Assistant_Site_Agent {
         }
         $h = substr(md5($ip), 0, 16); // hash parziale — non loggare IP in chiaro
 
-        // ── Finestra 1: max 10 richieste al minuto ──
+        // ── Finestra 1: max 30 richieste al minuto ──
         $key_min   = 'marrison_rl_m_' . $h;
         $count_min = (int) get_transient($key_min);
-        if ($count_min >= 10) {
+        if ($count_min >= 30) {
             return array('wait' => '60', 'message' => 'Stai inviando troppi messaggi. Attendi un momento prima di riprovare.');
         }
         // Incrementa; se il transient non esiste ancora, impostalo con TTL 60s
@@ -866,10 +964,10 @@ class Marrison_Assistant_Site_Agent {
             set_transient($key_min, $count_min + 1, 60);
         }
 
-        // ── Finestra 2: max 80 richieste all'ora ──
+        // ── Finestra 2: max 200 richieste all'ora ──
         $key_hour   = 'marrison_rl_h_' . $h;
         $count_hour = (int) get_transient($key_hour);
-        if ($count_hour >= 80) {
+        if ($count_hour >= 200) {
             return array('wait' => '3600', 'message' => 'Limite orario raggiunto. Riprova tra qualche minuto.');
         }
         if ($count_hour === 0) {

@@ -317,7 +317,8 @@ jQuery(document).ready(function($) {
 
     // Invio richiesta step-based al server
     function sendStepRequest(stepValue, stepLabel) {
-        showTyping();
+        const thinkingSteps = ['describe_problem', 'clarify_problem', 'send_report'];
+        showTyping(thinkingSteps.includes(chatState.step) ? 'Sto pensando...' : null);
         sendButton.prop('disabled', true);
         $.post(marrisonAgent.ajaxUrl, {
             action:  'marrison_condominium_step',
@@ -465,10 +466,12 @@ jQuery(document).ready(function($) {
     }
     
     // Show typing indicator
-    function showTyping() {
+    function showTyping(label) {
+        const labelHtml = label ? `<div class="marrison-typing-label">${label}</div>` : '';
         const typingHtml = `
             <div class="marrison-message marrison-bot marrison-typing-message">
                 <div class="marrison-typing">
+                    ${labelHtml}
                     <div class="marrison-typing-dot"></div>
                     <div class="marrison-typing-dot"></div>
                     <div class="marrison-typing-dot"></div>

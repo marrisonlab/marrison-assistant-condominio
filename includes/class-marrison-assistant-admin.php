@@ -80,6 +80,10 @@ class Marrison_Assistant_Admin {
         register_setting('marrison_assistant_settings', 'marrison_assistant_site_agent_button_color');
         register_setting('marrison_assistant_settings', 'marrison_assistant_condominio_admin_email');
         register_setting('marrison_assistant_settings', 'marrison_assistant_site_agent_avatar');
+        // SMS Aruba
+        register_setting('marrison_assistant_settings', 'marrison_aruba_email');
+        register_setting('marrison_assistant_settings', 'marrison_aruba_password');
+        register_setting('marrison_assistant_settings', 'marrison_aruba_sender');
     }
     
     /**

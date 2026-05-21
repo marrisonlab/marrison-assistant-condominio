@@ -173,6 +173,18 @@ add_action('plugins_loaded', function() {
     Marrison_Assistant_Requests::create_table();
 });
 
+// ── Invalidazione cache fornitori JSON ───────────────────────────────────────
+// Quando si salva un condominio → invalida solo il suo file cache.
+// Quando si salva un fornitore  → invalida tutti (non sappiamo quali condominii usa).
+add_action('save_post_condominio', function($post_id) {
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
+    Marrison_Assistant_Condominio::invalidate_cache($post_id);
+});
+add_action('save_post_fornitore', function($post_id) {
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
+    Marrison_Assistant_Condominio::invalidate_cache();
+});
+
 // ── Token conferma intervento (nessun login richiesto) ──────────────────────
 add_action('init', function() {
     if (!isset($_GET['marrison_confirm'])) return;

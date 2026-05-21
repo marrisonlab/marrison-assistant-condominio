@@ -49,6 +49,10 @@ class Marrison_Assistant_Main_Page {
             'marrison_assistant_site_agent_response_events',
             'marrison_assistant_enable_custom_prompt',
             // NOTA: marrison_assistant_gemini_api_key rimosso — API key gestita dal Commander
+            // SMS Aruba
+            'marrison_aruba_email',
+            'marrison_aruba_password',
+            'marrison_aruba_sender',
         );
         foreach ($all as $opt) {
             register_setting('marrison_assistant_panel', $opt);
@@ -264,6 +268,39 @@ class Marrison_Assistant_Main_Page {
                 </div>
 
             </div><!-- /ma-row -->
+
+            <!-- Sezione SMS -->
+            <div class="ma-row" style="margin-top:20px;">
+                <div class="ma-card" style="flex:1;">
+                    <div class="ma-card-title">
+                        <span class="dashicons dashicons-phone"></span>
+                        <strong>Notifiche SMS (Aruba)</strong>
+                    </div>
+                    <table class="form-table" style="margin:0;">
+                        <tr>
+                            <th style="width:160px;"><label for="marrison_aruba_email">Email account</label></th>
+                            <td><input type="text" id="marrison_aruba_email" name="marrison_aruba_email"
+                                       value="<?php echo esc_attr(get_option('marrison_aruba_email','')); ?>"
+                                       class="regular-text" placeholder="email@esempio.it"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="marrison_aruba_password">Password API</label></th>
+                            <td><input type="password" id="marrison_aruba_password" name="marrison_aruba_password"
+                                       value="<?php echo esc_attr(get_option('marrison_aruba_password','')); ?>"
+                                       class="regular-text"></td>
+                        </tr>
+                        <tr>
+                            <th><label for="marrison_aruba_sender">Mittente</label></th>
+                            <td>
+                                <input type="text" id="marrison_aruba_sender" name="marrison_aruba_sender"
+                                       value="<?php echo esc_attr(get_option('marrison_aruba_sender','')); ?>"
+                                       class="regular-text" maxlength="11" placeholder="Es: Segnalaz">
+                                <p class="description">Opzionale. Max 11 caratteri alfanumerici. L'SMS viene inviato solo ai fornitori con lo switch <em>abilita_sms</em> attivo.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
 
             <div class="ma-save">
                 <?php submit_button('Salva impostazioni', 'primary', 'submit', false); ?>

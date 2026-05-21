@@ -1,10 +1,144 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-/**
- * Dashboard delle segnalazioni nel pannello di amministrazione.
- */
+if (!class_exists('WP_List_Table')) {
+    require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+}
+
+// ── WP_List_Table per le segnalazioni ────────────────────────────────────────
+class Marrison_Segnalazioni_List_Table extends WP_List_Table {
+
+    private $f_cond   = 0;
+    private $f_forn   = 0;
+    private $f_status = '';
+
+    public function __construct() {
+        parent::__construct([
+            'singular' => 'segnalazione',
+            'plural'   => 'segnalazioni',
+            'ajax'     => false,
+        ]);
+    }
+
+    public function set_filters($cond, $forn, $status) {
+        $this->f_cond   = (int)    $cond;
+        $this->f_forn   = (int)    $forn;
+        $this->f_status = (string) $status;
+    }
+
+    public function get_columns() {
+        return [
+            'cb'             => '<input type="checkbox">',
+            'created_at'     => 'Data',
+            'condominio'     => 'Condominio',
+            'fornitore'      => 'Fornitore / Modalità',
+            'problema'       => 'Problema',
+            'inquilino'      => 'Condòmino',
+            'status'         => 'Stato',
+        ];
+    }
+
+    public function get_sortable_columns() {
+        return [
+            'created_at' => ['created_at', true],
+            'status'     => ['status', false],
+        ];
+    }
+
+    public function get_bulk_actions() {
+        return [
+            'bulk_delete'   => 'Elimina',
+            'bulk_complete' => 'Segna come completato',
+        ];
+    }
+
+    protected function column_default($item, $column_name) {
+        return esc_html($item->$column_name ?? '—');
+    }
+
+    protected function column_cb($item) {
+        return '<input type="checkbox" name="seg_ids[]" value="' . (int)$item->id . '">';
+    }
+
+    protected function column_created_at($item) {
+        $date = esc_html(date_i18n('d/m/Y H:i', strtotime($item->created_at)));
+        $base = admin_url('admin.php?page=marrison-segnalazioni');
+
+        $del_url = wp_nonce_url(add_query_arg(['marrison_action' => 'delete', 'id' => $item->id], $base), 'marrison_seg_' . $item->id);
+        $actions = [
+            'delete' => '<a href="' . esc_url($del_url) . '" onclick="return confirm(\'Eliminare questa segnalazione?\')" style="color:#b91c1c;">Elimina</a>',
+        ];
+        if ($item->status !== 'completed') {
+            $cmp_url = wp_nonce_url(add_query_arg(['marrison_action' => 'complete', 'id' => $item->id], $base), 'marrison_seg_' . $item->id);
+            $actions['complete'] = '<a href="' . esc_url($cmp_url) . '" onclick="return confirm(\'Segnare come completato e inviare notifiche?\')" style="color:#166534;">Completa</a>';
+        }
+        return $date . $this->row_actions($actions);
+    }
+
+    protected function column_condominio($item) {
+        return esc_html($item->condominio_name ?: '—');
+    }
+
+    protected function column_fornitore($item) {
+        if ($item->admin_only) {
+            return '<span style="color:#6366f1;font-style:italic;">Solo amministratore</span>';
+        }
+        return esc_html($item->fornitore_name ?: '—');
+    }
+
+    protected function column_problema($item) {
+        $short = mb_strimwidth($item->problema, 0, 120, '…');
+        return '<span title="' . esc_attr($item->problema) . '">' . esc_html($short) . '</span>';
+    }
+
+    protected function column_inquilino($item) {
+        return esc_html($item->inquilino_email ?: '—');
+    }
+
+    protected function column_status($item) {
+        if ($item->status === 'completed') {
+            $badge = '<span style="background:#dcfce7;color:#166534;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;">✓ Completato</span>';
+            if ($item->completed_at) {
+                $badge .= '<br><small style="color:#666;">' . esc_html(date_i18n('d/m/Y', strtotime($item->completed_at))) . '</small>';
+            }
+            return $badge;
+        }
+        return '<span style="background:#fef9c3;color:#713f12;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;">⏳ In attesa</span>';
+    }
+
+    public function prepare_items() {
+        $per_page     = 25;
+        $current_page = $this->get_pagenum();
+
+        $filters = array_filter([
+            'condominio_id' => $this->f_cond,
+            'fornitore_id'  => $this->f_forn,
+            'status'        => $this->f_status,
+        ]);
+
+        $data  = Marrison_Assistant_Requests::get_list($filters, $current_page, $per_page);
+        $this->items = $data['rows'];
+
+        $this->set_pagination_args([
+            'total_items' => $data['total'],
+            'per_page'    => $per_page,
+            'total_pages' => ceil($data['total'] / $per_page),
+        ]);
+
+        $columns  = $this->get_columns();
+        $hidden   = [];
+        $sortable = $this->get_sortable_columns();
+        $this->_column_headers = [$columns, $hidden, $sortable];
+    }
+}
+
+// ── Controller dashboard ─────────────────────────────────────────────────────
 class Marrison_Assistant_Dashboard {
+
+    public function __construct() {
+        // admin_init gira prima di qualsiasi output: sicuro per i redirect
+        add_action('admin_init', [$this, 'process_actions']);
+    }
 
     public function add_menu() {
         add_submenu_page(
@@ -17,51 +151,65 @@ class Marrison_Assistant_Dashboard {
         );
     }
 
+    // ── Gestione azioni (singole e bulk) ─────────────────────────────────────
+    public function process_actions() {
+        if (!isset($_GET['page']) || $_GET['page'] !== 'marrison-segnalazioni') return;
+        if (!current_user_can('manage_options')) return;
+
+        $base = admin_url('admin.php?page=marrison-segnalazioni');
+
+        // ── Azione singola da row action ─────────────────────────────────────
+        if (!empty($_GET['marrison_action']) && !empty($_GET['id'])) {
+            $act = sanitize_key($_GET['marrison_action']);
+            $id  = (int) $_GET['id'];
+            $non = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+            if (wp_verify_nonce($non, 'marrison_seg_' . $id)) {
+                if ($act === 'delete') {
+                    Marrison_Assistant_Requests::delete($id);
+                } elseif ($act === 'complete') {
+                    $row = Marrison_Assistant_Requests::complete_by_id($id);
+                    if ($row) Marrison_Assistant_Requests::send_completion_emails($row);
+                }
+            }
+            wp_safe_redirect($base);
+            exit;
+        }
+
+        // ── Azioni bulk (POST dal form WP_List_Table) ─────────────────────────
+        $bulk = isset($_POST['action']) && $_POST['action'] !== '-1'
+              ? sanitize_key($_POST['action'])
+              : (isset($_POST['action2']) && $_POST['action2'] !== '-1' ? sanitize_key($_POST['action2']) : '');
+
+        if ($bulk && !empty($_POST['seg_ids']) && check_admin_referer('bulk-segnalazioni')) {
+            $ids = array_map('intval', (array) $_POST['seg_ids']);
+            if ($bulk === 'bulk_delete') {
+                foreach ($ids as $id) Marrison_Assistant_Requests::delete($id);
+            } elseif ($bulk === 'bulk_complete') {
+                foreach ($ids as $id) {
+                    $row = Marrison_Assistant_Requests::complete_by_id($id);
+                    if ($row) Marrison_Assistant_Requests::send_completion_emails($row);
+                }
+            }
+            wp_safe_redirect($base);
+            exit;
+        }
+    }
+
+    // ── Rendering pagina ─────────────────────────────────────────────────────
     public function render() {
         if (!current_user_can('manage_options')) wp_die(__('Non autorizzato.'));
 
-        // ── Gestione azioni (elimina / completa) ───────────────────────────
-        $action  = isset($_GET['action'])   ? sanitize_key($_GET['action'])                       : '';
-        $act_id  = isset($_GET['id'])       ? (int) $_GET['id']                                   : 0;
-        $act_non = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce']))  : '';
-        $clean_url = admin_url('admin.php?page=marrison-segnalazioni');
+        $f_cond   = isset($_GET['cond'])   ? (int) $_GET['cond']           : 0;
+        $f_forn   = isset($_GET['forn'])   ? (int) $_GET['forn']           : 0;
+        $f_status = isset($_GET['status']) ? sanitize_key($_GET['status']) : '';
 
-        if ($action === 'delete_seg' && $act_id && wp_verify_nonce($act_non, 'marrison_delete_seg')) {
-            Marrison_Assistant_Requests::delete($act_id);
-            wp_safe_redirect($clean_url);
-            exit;
-        }
-
-        if ($action === 'complete_seg' && $act_id && wp_verify_nonce($act_non, 'marrison_complete_seg')) {
-            $completed_row = Marrison_Assistant_Requests::complete_by_id($act_id);
-            if ($completed_row) {
-                Marrison_Assistant_Requests::send_completion_emails($completed_row);
-            }
-            wp_safe_redirect($clean_url);
-            exit;
-        }
-
-        // Filtri dalla query string
-        $f_cond   = isset($_GET['cond'])   ? (int) $_GET['cond']              : 0;
-        $f_forn   = isset($_GET['forn'])   ? (int) $_GET['forn']              : 0;
-        $f_status = isset($_GET['status']) ? sanitize_key($_GET['status'])    : '';
-        $page     = max(1, isset($_GET['paged']) ? (int) $_GET['paged'] : 1);
-        $per_page = 25;
-
-        $filters = array_filter([
-            'condominio_id' => $f_cond,
-            'fornitore_id'  => $f_forn,
-            'status'        => $f_status,
-        ]);
-
-        $data        = Marrison_Assistant_Requests::get_list($filters, $page, $per_page);
-        $rows        = $data['rows'];
-        $total       = $data['total'];
-        $total_pages = max(1, ceil($total / $per_page));
         $condominios = Marrison_Assistant_Requests::get_unique_condominios();
         $fornitori   = Marrison_Assistant_Requests::get_unique_fornitori();
+        $base_url    = admin_url('admin.php?page=marrison-segnalazioni');
 
-        $base_url = admin_url('admin.php?page=marrison-segnalazioni');
+        $table = new Marrison_Segnalazioni_List_Table();
+        $table->set_filters($f_cond, $f_forn, $f_status);
+        $table->prepare_items();
         ?>
         <div class="wrap">
         <h1 style="display:flex;align-items:center;gap:10px;">
@@ -70,135 +218,41 @@ class Marrison_Assistant_Dashboard {
         </h1>
 
         <!-- Filtri -->
-        <form method="get" style="margin:16px 0 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <form method="get" style="margin:16px 0 10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
             <input type="hidden" name="page" value="marrison-segnalazioni">
-
             <select name="cond" style="min-width:200px;">
                 <option value="">— Tutti i condomini —</option>
                 <?php foreach ($condominios as $c): ?>
-                    <option value="<?php echo (int)$c->condominio_id; ?>"
-                        <?php selected($f_cond, $c->condominio_id); ?>>
+                    <option value="<?php echo (int)$c->condominio_id; ?>" <?php selected($f_cond, $c->condominio_id); ?>>
                         <?php echo esc_html($c->condominio_name); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
-
             <select name="forn" style="min-width:200px;">
                 <option value="">— Tutti i fornitori —</option>
                 <?php foreach ($fornitori as $f): ?>
-                    <option value="<?php echo (int)$f->fornitore_id; ?>"
-                        <?php selected($f_forn, $f->fornitore_id); ?>>
+                    <option value="<?php echo (int)$f->fornitore_id; ?>" <?php selected($f_forn, $f->fornitore_id); ?>>
                         <?php echo esc_html($f->fornitore_name); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
-
             <select name="status">
                 <option value="">— Tutti gli stati —</option>
                 <option value="pending"   <?php selected($f_status,'pending'); ?>>In attesa</option>
                 <option value="completed" <?php selected($f_status,'completed'); ?>>Completato</option>
             </select>
-
             <button type="submit" class="button">Filtra</button>
-            <?php if ($filters): ?>
+            <?php if ($f_cond || $f_forn || $f_status): ?>
                 <a href="<?php echo esc_url($base_url); ?>" class="button">Azzera</a>
             <?php endif; ?>
-
-            <span style="margin-left:auto;color:#666;font-size:13px;">
-                <?php echo $total; ?> segnalazion<?php echo $total == 1 ? 'e' : 'i'; ?>
-            </span>
         </form>
 
-        <!-- Tabella -->
-        <table class="wp-list-table widefat fixed striped" style="font-size:13px;">
-            <thead>
-                <tr>
-                    <th style="width:130px;">Data</th>
-                    <th style="width:180px;">Condominio</th>
-                    <th style="width:180px;">Fornitore / Modalità</th>
-                    <th>Problema</th>
-                    <th style="width:180px;">Condòmino</th>
-                    <th style="width:100px;">Stato</th>
-                    <th style="width:130px;">Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php if (empty($rows)): ?>
-                <tr><td colspan="7" style="text-align:center;padding:30px;color:#666;">Nessuna segnalazione trovata.</td></tr>
-            <?php else: ?>
-                <?php foreach ($rows as $r): ?>
-                <tr>
-                    <td>
-                        <span title="<?php echo esc_attr($r->created_at); ?>">
-                            <?php echo esc_html(date_i18n('d/m/Y H:i', strtotime($r->created_at))); ?>
-                        </span>
-                    </td>
-                    <td><?php echo esc_html($r->condominio_name ?: '—'); ?></td>
-                    <td>
-                        <?php if ($r->admin_only): ?>
-                            <span style="color:#6366f1;font-style:italic;">Solo amministratore</span>
-                        <?php else: ?>
-                            <?php echo esc_html($r->fornitore_name ?: '—'); ?>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <span title="<?php echo esc_attr($r->problema); ?>">
-                            <?php echo esc_html(mb_strimwidth($r->problema, 0, 120, '…')); ?>
-                        </span>
-                    </td>
-                    <td><?php echo esc_html($r->inquilino_email ?: '—'); ?></td>
-                    <td>
-                        <?php if ($r->status === 'completed'): ?>
-                            <span style="display:inline-block;white-space:nowrap;background:#dcfce7;color:#166534;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;">✓ Completato</span>
-                            <?php if ($r->completed_at): ?>
-                                <br><small style="color:#666;"><?php echo esc_html(date_i18n('d/m/Y', strtotime($r->completed_at))); ?></small>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            <span style="display:inline-block;white-space:nowrap;background:#fef9c3;color:#713f12;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;">⏳ In attesa</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="white-space:nowrap;">
-                        <?php if ($r->status !== 'completed'): ?>
-                        <?php $cmp_url = wp_nonce_url(add_query_arg(['action' => 'complete_seg', 'id' => $r->id], $base_url), 'marrison_complete_seg'); ?>
-                        <a href="<?php echo esc_url($cmp_url); ?>"
-                           onclick="return confirm('Segnare come completato e inviare notifiche?');"
-                           style="color:#166534;text-decoration:none;font-size:12px;margin-right:8px;" title="Segna completato">✓ Completa</a>
-                        <?php endif; ?>
-                        <?php $del_url = wp_nonce_url(add_query_arg(['action' => 'delete_seg', 'id' => $r->id], $base_url), 'marrison_delete_seg'); ?>
-                        <a href="<?php echo esc_url($del_url); ?>"
-                           onclick="return confirm('Eliminare questa segnalazione?');"
-                           style="color:#b91c1c;text-decoration:none;font-size:12px;" title="Elimina">✕ Elimina</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
-            </tbody>
-        </table>
+        <!-- Tabella WP_List_Table (il form e il nonce bulk sono gestiti da display()) -->
+        <form method="post">
+            <?php $table->display(); ?>
+        </form>
 
-        <!-- Paginazione -->
-        <?php if ($total_pages > 1): ?>
-        <div class="tablenav bottom" style="margin-top:12px;">
-            <div class="tablenav-pages">
-                <?php
-                $page_links = paginate_links([
-                    'base'      => add_query_arg('paged', '%#%', $base_url . '&' . http_build_query(array_filter([
-                        'cond'   => $f_cond   ?: null,
-                        'forn'   => $f_forn   ?: null,
-                        'status' => $f_status ?: null,
-                    ]))),
-                    'format'    => '',
-                    'current'   => $page,
-                    'total'     => $total_pages,
-                    'prev_text' => '&laquo;',
-                    'next_text' => '&raquo;',
-                ]);
-                echo $page_links;
-                ?>
-            </div>
         </div>
-        <?php endif; ?>
-
-        </div><!-- .wrap -->
         <?php
     }
 }
