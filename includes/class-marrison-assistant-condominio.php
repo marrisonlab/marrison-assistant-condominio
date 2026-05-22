@@ -747,12 +747,23 @@ class Marrison_Assistant_Condominio {
     }
 
     /**
-     * Invia un SMS tramite Aruba SMS API.
+     * Invia un SMS tramite il provider configurato (Aruba o SMS Tools).
      *
      * @param string $phone   Numero destinatario (qualsiasi formato italiano).
      * @param string $message Testo SMS (max 160 caratteri).
      */
     private function send_sms($phone, $message) {
+        $provider = get_option('marrison_sms_provider', 'aruba');
+        if ($provider === 'smstools') {
+            return $this->send_sms_smstools($phone, $message);
+        }
+        return $this->send_sms_aruba($phone, $message);
+    }
+
+    /**
+     * Invia un SMS tramite Aruba SMS API.
+     */
+    private function send_sms_aruba($phone, $message) {
         $email    = get_option('marrison_aruba_email', '');
         $password = get_option('marrison_aruba_password', '');
         $sender   = get_option('marrison_aruba_sender', '');
@@ -832,6 +843,58 @@ class Marrison_Assistant_Condominio {
         }
 
         $this->mlog('SMS Aruba inviato OK a ' . $phone);
+        return true;
+    }
+
+    /**
+     * Invia un SMS tramite SMS Tools API (api.smsgatewayapi.com).
+     */
+    private function send_sms_smstools($phone, $message) {
+        $client_id     = get_option('marrison_smstools_client_id', '');
+        $client_secret = get_option('marrison_smstools_client_secret', '');
+        $sender        = get_option('marrison_smstools_sender', '');
+
+        if (!$client_id || !$client_secret) {
+            $this->mlog('SMS Tools: credenziali non configurate.');
+            return false;
+        }
+
+        // Normalizza numero in formato internazionale
+        $phone = preg_replace('/[\s\-\.\(\)\/]+/', '', $phone);
+        if (preg_match('/^\+/', $phone)) {
+            $phone = ltrim($phone, '+');        // +39333... → 39333...
+        } elseif (preg_match('/^00/', $phone)) {
+            $phone = substr($phone, 2);         // 0039... → 39...
+        } elseif (preg_match('/^[03]/', $phone)) {
+            $phone = '39' . $phone;             // 333... o 06... → 39333...
+        }
+        if (!$phone) return false;
+
+        $body = ['message' => mb_substr($message, 0, 160), 'to' => $phone];
+        if ($sender) $body['sender'] = mb_substr($sender, 0, 11);
+
+        $response = wp_remote_post('https://api.smsgatewayapi.com/v1/message/send', [
+            'headers' => [
+                'X-Client-Id'     => $client_id,
+                'X-Client-Secret' => $client_secret,
+                'Content-Type'    => 'application/json',
+            ],
+            'body'    => json_encode($body),
+            'timeout' => 15,
+        ]);
+
+        if (is_wp_error($response)) {
+            $this->mlog('SMS Tools send error: ' . $response->get_error_message());
+            return false;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        if ($code < 200 || $code >= 300) {
+            $this->mlog('SMS Tools HTTP ' . $code . ': ' . wp_remote_retrieve_body($response));
+            return false;
+        }
+
+        $this->mlog('SMS Tools inviato OK a ' . $phone);
         return true;
     }
 }
