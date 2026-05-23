@@ -531,9 +531,14 @@ class Marrison_Assistant_Site_Agent {
         $temp_name = 'marr_' . bin2hex(random_bytes(8)) . '.' . $ext;
         $temp_path = $temp_dir . $temp_name;
 
+        error_log('Marrison Photo Upload: temp_dir=' . $temp_dir . ' temp_name=' . $temp_name . ' temp_path=' . $temp_path);
+
         if (!move_uploaded_file($file['tmp_name'], $temp_path)) {
+            error_log('Marrison Photo Upload: failed to move_uploaded_file');
             wp_send_json_error(array('message' => 'Impossibile salvare il file. Riprova.'));
         }
+
+        error_log('Marrison Photo Upload: file saved successfully, exists=' . (file_exists($temp_path) ? 'yes' : 'no'));
 
         wp_send_json_success(array(
             'id'   => $temp_name,

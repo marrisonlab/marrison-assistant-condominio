@@ -1,52 +1,204 @@
-[22-May-2026 09:46:17 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:46:17 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:46:17 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:46:17 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:46:25 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:46:25 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:46:25 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:46:25 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:46:26 UTC] Marrison Assistant: call_commander START - intent=condominio_classify prompt_bytes=3090 site_url=https://www.studiomarcoabbate.com
-[22-May-2026 09:46:32 UTC] Marrison Assistant: token — prompt=839 output=49 total=888
-[22-May-2026 09:46:32 UTC] Marrison Assistant: invio token log al Commander - site_url=https://www.studiomarcoabbate.com tokens=888
-[22-May-2026 09:46:33 UTC] Marrison Assistant: Commander risposta HTTP 200 body={"success":true,"id":1}
-[22-May-2026 09:46:33 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:46:33 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:46:33 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:46:33 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:46:37 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:46:37 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:46:37 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:46:37 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:46:38 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:46:38 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:46:38 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:46:38 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:47:51 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:47:51 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:47:51 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:47:51 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:47:52 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:47:52 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:47:52 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:47:52 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:49:26 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:49:26 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:49:26 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:49:26 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:49:26 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:49:26 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:49:26 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:49:26 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:49:46 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:49:46 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:49:46 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:49:46 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:49:52 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:49:52 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:49:52 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:49:52 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
-[22-May-2026 09:49:52 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
-[22-May-2026 09:49:52 UTC] Marrison Assistant: Initializing updater
-[22-May-2026 09:49:52 UTC] Marrison Assistant: Initializing main plugin class
-[22-May-2026 09:49:52 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:08 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:09 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:09 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:09 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:13 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:13 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:13 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:13 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:14 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:14 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:14 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:14 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:22 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:22 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:22 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:22 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:23 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:23 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:23 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:23 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:27 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:27 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:27 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:27 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:28 UTC] Marrison Assistant: call_commander START - intent=condominio_classify prompt_bytes=3082 site_url=https://www.studiomarcoabbate.com
+[22-May-2026 11:30:43 UTC] Marrison Assistant: token — prompt=838 output=62 total=900
+[22-May-2026 11:30:43 UTC] Marrison Assistant: invio token log al Commander - site_url=https://www.studiomarcoabbate.com tokens=900
+[22-May-2026 11:30:45 UTC] Marrison Assistant: Commander risposta HTTP 200 body={"success":true,"id":1}
+[22-May-2026 11:30:45 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:45 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:45 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:45 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:49 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:49 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:49 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:49 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:53 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:53 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:53 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:53 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:30:53 UTC] Marrison Photo Upload: temp_dir=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/ temp_name=marr_a9cba13f2f5b7dd6.jpg temp_path=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/marr_a9cba13f2f5b7dd6.jpg
+[22-May-2026 11:30:53 UTC] Marrison Photo Upload: file saved successfully, exists=yes
+[22-May-2026 11:30:54 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:30:54 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:30:54 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:30:54 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:31:03 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:31:03 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:31:03 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:31:03 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:31:04 UTC] Marrison Insert: token=12655947a034f0962c46743313fa232c794d2a9b completion_token=947facf562661bd44c6c177404db17661a190270
+[22-May-2026 11:31:04 UTC] Marrison Insert: insert_id=30 error=
+[22-May-2026 11:31:09 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:31:09 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:31:09 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:31:09 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:32:09 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:32:09 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:32:09 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:32:09 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:32:09 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:32:09 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:32:09 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:32:09 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:32:17 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:32:17 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:32:17 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:32:17 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:32:17 UTC] Marrison Assistant: check_update called
+[22-May-2026 11:32:17 UTC] Marrison Assistant: GitHub releases/latest failed (HTTP 403): 
+[22-May-2026 11:32:17 UTC] Marrison Assistant: GitHub releases list failed (HTTP 403): 
+[22-May-2026 11:32:17 UTC] Marrison Assistant: failed to get remote version
+[22-May-2026 11:32:17 UTC] Marrison Assistant: check_update called
+[22-May-2026 11:32:18 UTC] Marrison Assistant: GitHub releases/latest failed (HTTP 403): 
+[22-May-2026 11:32:18 UTC] Marrison Assistant: GitHub releases list failed (HTTP 403): 
+[22-May-2026 11:32:18 UTC] Marrison Assistant: failed to get remote version
+[22-May-2026 11:32:18 UTC] Marrison Assistant: check_update called
+[22-May-2026 11:32:18 UTC] Marrison Assistant: GitHub releases/latest failed (HTTP 403): 
+[22-May-2026 11:32:18 UTC] Marrison Assistant: GitHub releases list failed (HTTP 403): 
+[22-May-2026 11:32:18 UTC] Marrison Assistant: failed to get remote version
+[22-May-2026 11:32:18 UTC] Marrison Assistant: check_update called
+[22-May-2026 11:32:18 UTC] Marrison Assistant: GitHub releases/latest failed (HTTP 403): 
+[22-May-2026 11:32:18 UTC] Marrison Assistant: GitHub releases list failed (HTTP 403): 
+[22-May-2026 11:32:18 UTC] Marrison Assistant: failed to get remote version
+[22-May-2026 11:32:18 UTC] Marrison Assistant: check_update called
+[22-May-2026 11:32:19 UTC] Marrison Assistant: GitHub releases/latest failed (HTTP 403): 
+[22-May-2026 11:32:19 UTC] Marrison Assistant: GitHub releases list failed (HTTP 403): 
+[22-May-2026 11:32:19 UTC] Marrison Assistant: failed to get remote version
+[22-May-2026 11:33:20 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:33:20 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:33:20 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:33:20 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:33:20 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:33:20 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:33:20 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:33:20 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:35:20 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:35:20 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:35:20 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:35:20 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:35:21 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:35:21 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:35:21 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:35:21 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:37:21 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:37:21 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:37:21 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:37:21 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:37:21 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:37:21 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:37:21 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:37:21 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:37:50 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:37:50 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:37:50 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:37:50 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:37:52 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:37:52 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:37:52 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:37:52 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:37:52 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:37:52 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:37:52 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:37:52 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:37:57 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:37:57 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:37:57 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:37:57 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:37:57 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:37:57 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:37:58 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:37:58 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:02 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:02 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:02 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:02 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:02 UTC] Marrison Assistant: call_commander START - intent=condominio_classify prompt_bytes=3086 site_url=https://www.studiomarcoabbate.com
+[22-May-2026 11:38:04 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:04 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:04 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:04 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:10 UTC] Marrison Assistant: token — prompt=838 output=61 total=899
+[22-May-2026 11:38:10 UTC] Marrison Assistant: invio token log al Commander - site_url=https://www.studiomarcoabbate.com tokens=899
+[22-May-2026 11:38:12 UTC] Marrison Assistant: Commander risposta HTTP 200 body={"success":true,"id":1}
+[22-May-2026 11:38:13 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:13 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:13 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:13 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:19 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:19 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:19 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:19 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:19 UTC] Marrison Photo Upload: temp_dir=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/ temp_name=marr_2c212dc4a7394954.png temp_path=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/marr_2c212dc4a7394954.png
+[22-May-2026 11:38:19 UTC] Marrison Photo Upload: file saved successfully, exists=yes
+[22-May-2026 11:38:21 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:21 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:21 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:21 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:29 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:29 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:29 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:29 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:30 UTC] Marrison Insert: token=0a6802c98925bdb5dacf32a3cc0e6b21400d23ba completion_token=e501b59b6f240ba0a85af090c732a460e36281ca
+[22-May-2026 11:38:30 UTC] Marrison Insert: insert_id=31 error=
+[22-May-2026 11:38:30 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:30 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:30 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:30 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:40 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:40 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:40 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:40 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:43 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:43 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:43 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:43 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:44 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:44 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:44 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:44 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:44 UTC] Marrison Photo: request - token=0a6802c98925bdb5dacf32a3cc0e6b21400d23ba file=marr_2c212dc4a7394954.png
+[22-May-2026 11:38:44 UTC] Marrison Photo: token found - id=31 token=0a6802c98925bdb5dacf32a3cc0e6b21400d23ba completion_token=e501b59b6f240ba0a85af090c732a460e36281ca
+[22-May-2026 11:38:44 UTC] Marrison Photo: temp_dir=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/ file_path=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/marr_2c212dc4a7394954.png exists=no
+[22-May-2026 11:38:44 UTC] Marrison Photo: file not found or path invalid
+[22-May-2026 11:38:45 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:45 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:45 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:45 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:45 UTC] Marrison Photo: request - token=0a6802c98925bdb5dacf32a3cc0e6b21400d23ba file=marr_2c212dc4a7394954.png
+[22-May-2026 11:38:45 UTC] Marrison Photo: token found - id=31 token=0a6802c98925bdb5dacf32a3cc0e6b21400d23ba completion_token=e501b59b6f240ba0a85af090c732a460e36281ca
+[22-May-2026 11:38:45 UTC] Marrison Photo: temp_dir=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/ file_path=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/marr_2c212dc4a7394954.png exists=no
+[22-May-2026 11:38:45 UTC] Marrison Photo: file not found or path invalid
+[22-May-2026 11:38:48 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:48 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:48 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:48 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92
+[22-May-2026 11:38:48 UTC] Marrison Photo: request - token=0a6802c98925bdb5dacf32a3cc0e6b21400d23ba file=marr_2c212dc4a7394954.png
+[22-May-2026 11:38:48 UTC] Marrison Photo: token found - id=31 token=0a6802c98925bdb5dacf32a3cc0e6b21400d23ba completion_token=e501b59b6f240ba0a85af090c732a460e36281ca
+[22-May-2026 11:38:48 UTC] Marrison Photo: temp_dir=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/ file_path=/web/htdocs/www.studiomarcoabbate.com/home/wp-content/uploads/marrison-temp/marr_2c212dc4a7394954.png exists=no
+[22-May-2026 11:38:48 UTC] Marrison Photo: file not found or path invalid
+[22-May-2026 11:38:56 UTC] Marrison Assistant: Loading plugin v1.0.0 from /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/marrison-assistant-condominio/
+[22-May-2026 11:38:56 UTC] Marrison Assistant: Initializing updater
+[22-May-2026 11:38:56 UTC] Marrison Assistant: Initializing main plugin class
+[22-May-2026 11:38:56 UTC] PHP Deprecated:  Return type of PMXE_Config::getIterator() should either be compatible with IteratorAggregate::getIterator(): Traversable, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in /web/htdocs/www.studiomarcoabbate.com/home/wp-content/plugins/wp-all-export-pro/classes/config.php on line 92

@@ -25,22 +25,42 @@ class Marrison_Assistant_Requests {
             created_at      datetime              NOT NULL,
             condominio_id   bigint(20) UNSIGNED   NOT NULL DEFAULT 0,
             condominio_name varchar(255)          NOT NULL DEFAULT '',
+            indirizzo       varchar(255)          NOT NULL DEFAULT '',
             fornitore_id    bigint(20) UNSIGNED   NOT NULL DEFAULT 0,
             fornitore_name  varchar(255)          NOT NULL DEFAULT '',
             problema        text                  NOT NULL,
+            foto_ids        text                  NOT NULL DEFAULT '',
             inquilino_email varchar(255)          NOT NULL DEFAULT '',
             admin_only      tinyint(1)            NOT NULL DEFAULT 0,
             status          varchar(20)           NOT NULL DEFAULT 'pending',
+            token           char(40)             NOT NULL DEFAULT '',
             completion_token char(40)             NOT NULL DEFAULT '',
             completed_at    datetime                       DEFAULT NULL,
             PRIMARY KEY  (id),
-            UNIQUE KEY   token    (completion_token),
+            UNIQUE KEY   token    (token),
+            UNIQUE KEY   completion_token (completion_token),
             KEY          cond_idx (condominio_id),
             KEY          forn_idx (fornitore_id),
             KEY          stat_idx (status)
-        ) {$cc};";
+        ) {$cc}";;
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+
+        // Aggiunge colonne mancanti per retrocompatibilità
+        $col_indirizzo = $wpdb->get_results("SHOW COLUMNS FROM {$t} LIKE 'indirizzo'");
+        if (empty($col_indirizzo)) {
+            $wpdb->query("ALTER TABLE {$t} ADD COLUMN indirizzo varchar(255) NOT NULL DEFAULT '' AFTER condominio_name");
+        }
+
+        $col_foto_ids = $wpdb->get_results("SHOW COLUMNS FROM {$t} LIKE 'foto_ids'");
+        if (empty($col_foto_ids)) {
+            $wpdb->query("ALTER TABLE {$t} ADD COLUMN foto_ids text NOT NULL DEFAULT '' AFTER problema");
+        }
+
+        $col_token = $wpdb->get_results("SHOW COLUMNS FROM {$t} LIKE 'token'");
+        if (empty($col_token)) {
+            $wpdb->query("ALTER TABLE {$t} ADD COLUMN token char(40) NOT NULL DEFAULT '' AFTER admin_only");
+        }
     }
 
     /**
@@ -48,24 +68,30 @@ class Marrison_Assistant_Requests {
      */
     public static function insert($data) {
         global $wpdb;
-        $token = bin2hex(random_bytes(20)); // 40 hex chars
+        $token = bin2hex(random_bytes(20)); // 40 hex chars per pagina temporanea
+        $completion_token = bin2hex(random_bytes(20)); // 40 hex chars per conferma
+        error_log('Marrison Insert: token=' . $token . ' completion_token=' . $completion_token);
         $wpdb->insert(
             self::table_name(),
             [
                 'created_at'       => current_time('mysql'),
                 'condominio_id'    => (int) ($data['condominio_id']   ?? 0),
                 'condominio_name'  => (string) ($data['condominio_name'] ?? ''),
+                'indirizzo'        => (string) ($data['indirizzo']       ?? ''),
                 'fornitore_id'     => (int) ($data['fornitore_id']    ?? 0),
                 'fornitore_name'   => (string) ($data['fornitore_name'] ?? ''),
                 'problema'         => (string) ($data['problema']       ?? ''),
+                'foto_ids'         => (string) ($data['foto_ids']       ?? ''),
                 'inquilino_email'  => (string) ($data['inquilino_email'] ?? ''),
                 'admin_only'       => (int) !empty($data['admin_only']),
                 'status'           => 'pending',
-                'completion_token' => $token,
+                'token'            => $token,
+                'completion_token' => $completion_token,
             ],
-            ['%s','%d','%s','%d','%s','%s','%s','%d','%s','%s']
+            ['%s','%d','%s','%s','%d','%s','%s','%s','%s','%d','%s','%s','%s']
         );
-        return ['id' => (int) $wpdb->insert_id, 'token' => $token];
+        error_log('Marrison Insert: insert_id=' . $wpdb->insert_id . ' error=' . $wpdb->last_error);
+        return ['id' => (int) $wpdb->insert_id, 'token' => $token, 'completion_token' => $completion_token];
     }
 
     /**
@@ -92,6 +118,23 @@ class Marrison_Assistant_Requests {
         );
         $row->status       = 'completed';
         $row->completed_at = current_time('mysql');
+
+        // Pulisci i file temporanei associati alla richiesta
+        if (!empty($row->foto_ids)) {
+            $upload_dir = wp_upload_dir();
+            $temp_dir   = $upload_dir['basedir'] . '/marrison-temp/';
+            $foto_files = explode(',', $row->foto_ids);
+            foreach ($foto_files as $file) {
+                $file = trim($file);
+                if (preg_match('/^marr_[a-f0-9]+\.(jpg|jpeg|png|gif|webp|heic)$/i', $file)) {
+                    $path = $temp_dir . $file;
+                    if (file_exists($path) && strpos(realpath($path), realpath($temp_dir)) === 0) {
+                        @unlink($path);
+                    }
+                }
+            }
+        }
+
         return $row;
     }
 
@@ -225,5 +268,30 @@ class Marrison_Assistant_Requests {
      */
     public static function confirm_url($token) {
         return add_query_arg('marrison_confirm', $token, home_url('/'));
+    }
+
+    /**
+     * URL pubblica per la pagina temporanea con dettagli richiesta (per SMS).
+     */
+    public static function details_url($token) {
+        return add_query_arg('marrison_req', $token, home_url('/'));
+    }
+
+    /**
+     * Ottiene i dettagli di una richiesta tramite token.
+     */
+    public static function get_by_token($token) {
+        global $wpdb;
+        $t = self::table_name();
+        // Prima cerca per token (nuovo), poi per completion_token (vecchio per compatibilità)
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$t} WHERE token = %s AND status != 'completed'", $token
+        ));
+        if (!$row) {
+            $row = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$t} WHERE completion_token = %s AND status != 'completed'", $token
+            ));
+        }
+        return $row;
     }
 }

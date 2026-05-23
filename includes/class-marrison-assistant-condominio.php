@@ -608,9 +608,11 @@ class Marrison_Assistant_Condominio {
      * @param  int    $fornitore_id
      * @param  string $problema
      * @param  string $inquilino_email
+     * @param  array  $photo_ids    Array di ID allegati foto
+     * @param  bool   $admin_only
      * @return array  Risultati wp_mail per chiave 'fornitore','admin','inquilino'.
      */
-    public function send_emails($condominio_id, $fornitore_id, $problema, $inquilino_email, $attachments = array(), $admin_only = false) {
+    public function send_emails($condominio_id, $fornitore_id, $problema, $inquilino_email, $photo_ids = array(), $admin_only = false) {
         $condominio  = get_post($condominio_id);
         $fornitore   = get_post($fornitore_id);
         $indirizzo   = get_post_meta($condominio_id, 'indirizzo_condominio', true);
@@ -630,33 +632,47 @@ class Marrison_Assistant_Condominio {
         add_filter('wp_mail_from',      $mail_from_cb);
         add_filter('wp_mail_from_name', $mail_from_name_cb);
 
-        // Valida allegati: solo file esistenti in marrison-temp
+        // Converti $photo_ids in percorsi file per allegati email
         $upload_dir  = wp_upload_dir();
         $temp_dir    = $upload_dir['basedir'] . '/marrison-temp/';
-        $valid_att   = array();
-        foreach ($attachments as $att) {
-            $att = $temp_dir . basename($att);
-            if (file_exists($att) && strpos(realpath($att), realpath($temp_dir)) === 0) {
-                $valid_att[] = $att;
+        $attachments = array();
+        foreach ($photo_ids as $pid) {
+            if (preg_match('/^marr_[a-f0-9]+\.(jpg|jpeg|png|gif|webp|heic)$/i', $pid)) {
+                $path = $temp_dir . $pid;
+                if (file_exists($path) && strpos(realpath($path), realpath($temp_dir)) === 0) {
+                    $attachments[] = $path;
+                }
             }
         }
-        $attachments = $valid_att;
 
-        $cond_nome       = $indirizzo ? 'Condominio di ' . $indirizzo : ($condominio ? $condominio->post_title : "Condominio #{$condominio_id}");
-        $cond_nome_admin = ($condominio ? $condominio->post_title : "Condominio #{$condominio_id}") . ($indirizzo ? ' — ' . $indirizzo : '');
+        $cond_nome       = $condominio ? $condominio->post_title : "Condominio #{$condominio_id}";
+        $cond_nome_admin = $cond_nome . ($indirizzo ? ' — ' . $indirizzo : '');
         $forn_nome       = $fornitore ? $fornitore->post_title : "Fornitore #{$fornitore_id}";
 
         // ── Salva segnalazione nel DB e genera token ─────────────────────
+        // Salva nomi file delle foto temporanee per la pagina SMS
+        $foto_files = array();
+        foreach ($photo_ids as $pid) {
+            if (preg_match('/^marr_[a-f0-9]+\.(jpg|jpeg|png|gif|webp|heic)$/i', $pid)) {
+                $foto_files[] = $pid;
+            }
+        }
+        $foto_ids_str = implode(',', $foto_files);
         $req = Marrison_Assistant_Requests::insert([
             'condominio_id'   => $condominio_id,
             'condominio_name' => $cond_nome,
+            'indirizzo'       => $indirizzo,
             'fornitore_id'    => $fornitore_id,
             'fornitore_name'  => $admin_only ? '' : $forn_nome,
             'problema'        => $problema,
+            'foto_ids'        => $foto_ids_str,
             'inquilino_email' => $inquilino_email,
             'admin_only'      => $admin_only,
         ]);
+        $this->mlog('Richiesta salvata: id=' . $req['id'] . ' token=' . $req['token']);
         $confirm_url = Marrison_Assistant_Requests::confirm_url($req['token']);
+        $details_url = Marrison_Assistant_Requests::details_url($req['token']);
+        $this->mlog('Details URL: ' . $details_url);
 
         // ── Email al fornitore (skip in admin_only mode) ──────────────────
         if (!$admin_only && $mail_forn) {
@@ -682,9 +698,7 @@ class Marrison_Assistant_Condominio {
             $sms_flag = get_post_meta($fornitore_id, 'abilita_sms', true);
             $this->mlog('SMS check — forn_id=' . $fornitore_id . ' tel=' . var_export($tel_forn, true) . ' abilita_sms=' . var_export($sms_flag, true));
             if ($tel_forn && $sms_flag && $sms_flag !== 'false') {
-                $sms_addr = $indirizzo ?: ($condominio ? $condominio->post_title : '');
-                $sms_text = mb_substr('Richiesta intervento: ' . $sms_addr, 0, 130);
-                $this->send_sms($tel_forn, $sms_text);
+                $this->send_sms($tel_forn, $details_url);
             }
         } else {
             $sent['fornitore'] = false;
@@ -738,10 +752,9 @@ class Marrison_Assistant_Condominio {
         remove_filter('wp_mail_from',      $mail_from_cb);
         remove_filter('wp_mail_from_name', $mail_from_name_cb);
 
-        // ── Pulizia file temporanei ──────────────────────────────────────────
-        foreach ($attachments as $path) {
-            @unlink($path);
-        }
+        // NOTA: I file temporanei NON vengono cancellati qui perché devono rimanere
+        // disponibili per la pagina temporanea (SMS). Verranno cancellati quando
+        // la richiesta viene marcata come completata.
 
         return $sent;
     }
@@ -749,10 +762,19 @@ class Marrison_Assistant_Condominio {
     /**
      * Invia un SMS tramite il provider configurato (Aruba o SMS Tools).
      *
-     * @param string $phone   Numero destinatario (qualsiasi formato italiano).
-     * @param string $message Testo SMS (max 160 caratteri).
+     * @param string $phone Numero destinatario (qualsiasi formato italiano).
+     * @param string $url   URL della pagina dettagli richiesta.
      */
-    private function send_sms($phone, $message) {
+    private function send_sms($phone, $url) {
+        // Costruisci messaggio con limite 130 caratteri
+        $label = 'Richiesta intervento: ';
+        $with_label = $label . $url;
+        if (mb_strlen($with_label) <= 130) {
+            $message = $with_label;
+        } else {
+            $message = $url;
+        }
+
         $provider = get_option('marrison_sms_provider', 'aruba');
         if ($provider === 'smstools') {
             return $this->send_sms_smstools($phone, $message);
