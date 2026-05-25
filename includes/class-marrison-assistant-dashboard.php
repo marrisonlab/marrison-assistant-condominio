@@ -142,7 +142,7 @@ class Marrison_Assistant_Dashboard {
 
     public function add_menu() {
         add_submenu_page(
-            'marrison-assistant',
+            'domino',
             'Segnalazioni',
             'Segnalazioni',
             'manage_options',

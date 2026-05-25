@@ -19,7 +19,7 @@ class Marrison_Assistant_Main_Page {
      */
     public function suppress_foreign_notices() {
         $screen = get_current_screen();
-        if ($screen && strpos($screen->id, 'marrison-assistant') !== false) {
+        if ($screen && (strpos($screen->id, 'domino') !== false || strpos($screen->id, 'marrison-assistant') !== false)) {
             remove_all_actions('admin_notices');
             remove_all_actions('all_admin_notices');
             remove_all_actions('network_admin_notices');

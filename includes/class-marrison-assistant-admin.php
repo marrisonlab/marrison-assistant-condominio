@@ -27,24 +27,30 @@ class Marrison_Assistant_Admin {
      * Aggiunge la pagina menu del plugin
      */
     public function add_admin_menu() {
-        $menu_label = 'MA Condominio';
+        $menu_label = 'Domino';
+        $svg_path   = MARRISON_ASSISTANT_PLUGIN_DIR . 'icon.svg';
+        $icon       = 'dashicons-format-chat';
+        if (file_exists($svg_path)) {
+            $svg  = str_replace('<g>', '<g fill="#ffffff">', file_get_contents($svg_path));
+            $icon = 'data:image/svg+xml;base64,' . base64_encode($svg);
+        }
         add_menu_page(
             $menu_label,
             $menu_label,
             'manage_options',
-            'marrison-assistant',
+            'domino',
             array($this, 'main_page'),
-            'dashicons-format-chat',
+            $icon,
             30
         );
         
         // Sottopagine
         add_submenu_page(
-            'marrison-assistant',
+            'domino',
             'Impostazioni Generali',
             'Generale',
             'manage_options',
-            'marrison-assistant',
+            'domino',
             array($this, 'main_page')
         );
 
@@ -97,7 +103,7 @@ class Marrison_Assistant_Admin {
      */
     public function enqueue_admin_scripts($hook) {
         // Carica nelle pagine del plugin
-        if (strpos($hook, 'marrison-assistant') !== false) {
+        if (strpos($hook, 'domino') !== false) {
             wp_enqueue_media();
             wp_enqueue_script(
                 'marrison-admin',

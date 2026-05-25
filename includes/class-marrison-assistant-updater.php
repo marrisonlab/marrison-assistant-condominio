@@ -1,6 +1,6 @@
 <?php
 /**
- * GitHub Updater per Marrison Assistant
+ * GitHub Updater per Domino
  * Gestisce aggiornamenti automatici dal repository GitHub
  */
 
@@ -10,8 +10,8 @@ if (!defined('ABSPATH')) {
 
 class Marrison_Assistant_Updater {
 
-    private $plugin_slug = 'marrison-assistant';
-    private $plugin_file = 'marrison-assistant/marrison-assistant.php';
+    private $plugin_slug = 'marrison-assistant-condominio';
+    private $plugin_file = 'marrison-assistant-condominio/marrison-assistant.php';
     private $github_user = 'marrisonlab';
     private $github_repo = 'marrison-assistant-condominio';
     private $github_api_url = 'https://api.github.com/repos/marrisonlab/marrison-assistant-condominio';
@@ -60,7 +60,7 @@ class Marrison_Assistant_Updater {
         // ancora popolato il nostro plugin e senza iniezione l'update non apparirebbe.
         $current_version = !empty($transient->checked[$this->plugin_file])
             ? $transient->checked[$this->plugin_file]
-            : MARRISON_ASSISTANT_VERSION;
+            : DOMINO_VERSION;
         error_log('Marrison Assistant: current version ' . $current_version . ', remote version ' . $remote_version['version']);
 
         // Confronta versioni
@@ -283,29 +283,25 @@ class Marrison_Assistant_Updater {
         }
 
         $remote = $this->get_remote_version();
-        
-        if (!$remote) {
-            return $res;
-        }
 
         $info = new stdClass();
-        $info->name = 'Marrison Assistant';
+        $info->name = 'Domino';
         $info->slug = $this->plugin_slug;
-        $info->version = $remote['version'];
+        $info->version = $remote ? $remote['version'] : DOMINO_VERSION;
         $info->author = '<a href="https://marrisonlab.com" target="_blank">Marrisonlab</a>';
         $info->author_profile = 'https://marrisonlab.com';
         $info->plugin_url = 'https://github.com/marrisonlab/marrison-assistant-condominio';
-        $info->download_link = $remote['download_url'];
+        $info->download_link = $remote ? $remote['download_url'] : '';
         $info->requires_php = '7.4';
         $info->requires = '5.0';
         $info->tested = '6.4';
-        $info->last_updated = $remote['published_at'];
+        $info->last_updated = $remote ? $remote['published_at'] : '';
         $info->homepage = 'https://github.com/marrisonlab/marrison-assistant-condominio';
         $info->sections = [
-            'description' => 'Assistente AI per WordPress con integrazione Google Gemini. Widget chat frontend, RAG, analytics token e rate limiting integrati.',
-            'installation' => '1. Carica il plugin in wp-content/plugins/<br>2. Attiva il plugin<br>3. Configura la Gemini API Key nelle impostazioni',
-            'changelog' => $this->parse_changelog($remote['body']),
-            'faq' => '<strong>Dove trovo la API Key?</strong><br>Vai su Google AI Studio e crea una nuova API Key.<br><br><strong>Supporta WooCommerce?</strong><br>Sì, scansiona automaticamente prodotti e ordini.'
+            'description' => 'Assistente condominiale AI per WordPress. Widget chat frontend per segnalazioni, gestione fornitori, invio email e SMS automatici.',
+            'installation' => '1. Carica il plugin in wp-content/plugins/<br>2. Attiva il plugin<br>3. Configura le impostazioni',
+            'changelog' => $remote ? $this->parse_changelog($remote['body']) : 'Nessun changelog disponibile.',
+            'faq' => '<strong>Dove trovo la Gemini API Key?</strong><br>Vai su Google AI Studio e crea una nuova API Key.',
         ];
 
         return $info;
@@ -447,5 +443,5 @@ class Marrison_Assistant_Updater {
 }
 
 // Inizializza updater
-error_log('Marrison Assistant: Initializing updater');
+error_log('Domino: Initializing updater');
 new Marrison_Assistant_Updater();

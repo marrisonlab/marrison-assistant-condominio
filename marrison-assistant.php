@@ -1,12 +1,13 @@
 <?php
 /**
- * Plugin Name: MA Condominio
+ * Plugin Name: Domino
  * Plugin URI: https://github.com/marrisonlab/marrison-assistant-condominio
- * Description: Asssistente professionale AI per i tuoi clienti
- * Version: 1.0.0
+ * Description: Assistente condominiale AI per i tuoi clienti
+ * Version: 1.3.6
  * Author: Marrisonlab
  * Author URI: https://marrisonlab.com
- * Text Domain: marrison-assistant
+ * Text Domain: domino
+ * Update URI: false
  */
 
 // Previeni accesso diretto
@@ -15,17 +16,22 @@ if (!defined('ABSPATH')) {
 }
 
 // Previeni caricamento multiplo (solo controllo versione)
-if (defined('MARRISON_ASSISTANT_VERSION')) {
-    error_log('Marrison Assistant: Plugin already loaded, skipping');
+if (defined('DOMINO_VERSION')) {
+    error_log('Domino: Plugin already loaded, skipping');
     return;
 }
 
 // Definisci costanti del plugin
-define('MARRISON_ASSISTANT_VERSION', '1.0.0');
-define('MARRISON_ASSISTANT_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('MARRISON_ASSISTANT_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('DOMINO_VERSION',    '1.3.6');
+define('DOMINO_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('DOMINO_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-error_log('Marrison Assistant: Loading plugin v' . MARRISON_ASSISTANT_VERSION . ' from ' . MARRISON_ASSISTANT_PLUGIN_DIR);
+// Alias di compatibilità – usati dai file include (non ridenominarli senza aggiornare tutti gli include)
+if (!defined('MARRISON_ASSISTANT_VERSION'))    define('MARRISON_ASSISTANT_VERSION',    DOMINO_VERSION);
+if (!defined('MARRISON_ASSISTANT_PLUGIN_DIR')) define('MARRISON_ASSISTANT_PLUGIN_DIR', DOMINO_PLUGIN_DIR);
+if (!defined('MARRISON_ASSISTANT_PLUGIN_URL')) define('MARRISON_ASSISTANT_PLUGIN_URL', DOMINO_PLUGIN_URL);
+
+error_log('Domino: Loading plugin v' . DOMINO_VERSION . ' from ' . DOMINO_PLUGIN_DIR);
 
 // Carica i file necessari
 require_once MARRISON_ASSISTANT_PLUGIN_DIR . 'includes/class-marrison-assistant-admin.php';
@@ -54,7 +60,7 @@ class Marrison_Assistant {
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
         // Link impostazioni nella lista plugin
-        add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'add_settings_link'));
+        add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'add_settings_link'), 100);
     }
 
     public function init() {
@@ -147,7 +153,12 @@ class Marrison_Assistant {
      * Aggiunge il link alle impostazioni nella pagina dei plugin
      */
     public function add_settings_link($links) {
-        $settings_link = '<a href="' . admin_url('admin.php?page=marrison-assistant') . '">Impostazioni</a>';
+        // Rimuovi eventuali link "Setting" / "Settings" aggiunti da terze parti o dal Commander
+        $links = array_filter($links, function($link) {
+            $text = strtolower(trim(strip_tags($link)));
+            return $text !== 'setting' && $text !== 'settings';
+        });
+        $settings_link = '<a href="' . admin_url('admin.php?page=domino') . '">Impostazioni</a>';
         array_unshift($links, $settings_link);
         return $links;
     }
@@ -165,7 +176,7 @@ class Marrison_Assistant {
 }
 
 // Inizializza il plugin
-error_log('Marrison Assistant: Initializing main plugin class');
+error_log('Domino: Initializing main plugin class');
 new Marrison_Assistant();
 
 // Aggiorna la tabella DB se necessario (dopo aggiornamenti plugin)
