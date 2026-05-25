@@ -650,6 +650,18 @@
     white-space: nowrap;
 }
 
+.marrison-footer-privacy-note {
+    color: #94a3b8;
+}
+.marrison-footer-privacy-note a {
+    color: #94a3b8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.marrison-footer-privacy-note a:hover {
+    color: #64748b;
+}
+
 .marrison-footer-branding {
     color: #94a3b8;
     text-decoration: none;

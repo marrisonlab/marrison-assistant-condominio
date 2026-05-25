@@ -682,7 +682,6 @@ class Marrison_Assistant_Condominio {
             $body .= "Condominio: {$cond_nome}\n";
             if ($indirizzo) $body .= "Indirizzo:   {$indirizzo}\n";
             $body .= "\nProblema segnalato:\n{$problema}\n\n";
-            $body .= "Contatto condòmino: {$inquilino_email}\n\n";
             $body .= "Si prega di prendere in carico la richiesta il prima possibile.\n\n";
             $n_att = count($attachments);
             if ($n_att > 0) $body .= "Foto allegate: {$n_att}\n\n";
@@ -720,8 +719,8 @@ class Marrison_Assistant_Condominio {
             if ($tel_forn)  $body_a .= " — Tel: {$tel_forn}";
             $body_a .= "\n";
         }
-        $body_a .= "Condòmino:   {$inquilino_email}\n\n";
-        $body_a .= "Cordiali saluti,\n{$site_name}";
+        if (!empty($inquilino_email)) $body_a .= "Condòmino:   {$inquilino_email}\n";
+        $body_a .= "\nCordiali saluti,\n{$site_name}";
         $n_att = count($attachments);
         if ($n_att > 0) $body_a .= "\nFoto allegate: {$n_att}\n";
         $sent['admin'] = wp_mail($admin_email, $subj_a, $body_a, $headers, $attachments);
@@ -745,8 +744,12 @@ class Marrison_Assistant_Condominio {
             $body_i .= "\nSarà contattato al più presto.\n\n";
         }
         $body_i .= "Cordiali saluti,\n{$site_name}";
-        $sent['inquilino'] = wp_mail($inquilino_email, $subj_i, $body_i, $headers);
-        if (!$sent['inquilino']) $this->mlog('mail INQUILINO fallita: to=' . $inquilino_email);
+        if (!empty($inquilino_email) && is_email($inquilino_email)) {
+            $sent['inquilino'] = wp_mail($inquilino_email, $subj_i, $body_i, $headers);
+            if (!$sent['inquilino']) $this->mlog('mail INQUILINO fallita: to=' . $inquilino_email);
+        } else {
+            $sent['inquilino'] = false;
+        }
 
         // Rimuovi filtri mittente dopo l'invio
         remove_filter('wp_mail_from',      $mail_from_cb);
